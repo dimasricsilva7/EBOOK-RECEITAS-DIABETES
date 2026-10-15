@@ -1,0 +1,1049 @@
+// ALÉM DA FOME — schema PostgreSQL (base técnica: HAMA BEADS, adaptada para produto 100% digital)
+// Valores monetários sempre em centavos (Int). Nenhum preço/texto comercial fica no código:
+// tudo é editável no admin e os pedidos guardam snapshot do que foi vendido.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+// ───────────────────────── Admin / auth / auditoria ─────────────────────────
+
+enum AdminRole {
+  OWNER
+  ADMIN
+  EDITOR
+}
+
+model AdminUser {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String
+  passwordHash String
+  role         AdminRole      @default(ADMIN)
+  active       Boolean        @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  sessions     AdminSession[]
+  auditLogs    AuditLog[]
+}
+
+model AdminSession {
+  id        String    @id @default(cuid())
+  adminId   String
+  admin     AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  ipHash    String?
+  userAgent String?
+  createdAt DateTime  @default(now())
+
+  @@index([adminId])
+}
+
+/// Tentativas de login (brute force) — persistente entre instâncias serverless.
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  key       String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+}
+
+/// Alterações administrativas: quem, o quê, valor anterior e novo.
+model AuditLog {
+  id        String     @id @default(cuid())
+  adminId   String?
+  admin     AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String?
+  entityId  String?
+  summary   String?
+  before    Json?
+  after     Json?
+  details   Json?
+  ipHash    String?
+  createdAt DateTime   @default(now())
+
+  @@index([createdAt])
+  @@index([entity, entityId])
+}
+
+// ───────────────────────── Catálogo ─────────────────────────
+
+enum ProductCategory {
+  PROGRAM
+  EBOOK
+  JOURNAL
+  AUDIO
+  VIDEO
+  BONUS
+  OTHER
+}
+
+/// Somente entrega digital (o projeto não vende produto físico).
+enum FulfillmentType {
+  DIGITAL
+}
+
+model Product {
+  id                  String            @id @default(cuid())
+  slug                String            @unique
+  sku                 String            @unique
+  name                String
+  category            ProductCategory   @default(PROGRAM)
+  fulfillment         FulfillmentType   @default(DIGITAL)
+  /// Subtítulo curto (landing, checkout, e-mails)
+  subtitle            String?
+  shortDescription    String?
+  description         String?
+  priceCents          Int
+  compareAtPriceCents Int?
+  // Promoção real com início/fim (sem contagem regressiva falsa)
+  promoPriceCents     Int?
+  promoStartsAt       DateTime?
+  promoEndsAt         DateTime?
+  promoLabel          String?
+  /// Especificações livres: [{ label, value }] (ex.: formato, acesso, idioma)
+  specs               Json              @default("[]")
+  /// Capa do produto (upload por arquivo ou link)
+  imageUrl            String?
+  /// Galeria: [{ url, alt }]
+  gallery             Json              @default("[]")
+  videoUrl            String?
+  badge               String?
+  featured            Boolean           @default(false)
+  active              Boolean           @default(true)
+  sortOrder           Int               @default(0)
+  /// Produtos sugeridos no "Complete seu kit" quando este está no carrinho
+  crossSellIds        Json              @default("[]")
+  /// Produtos já inclusos neste (não oferecer como cross-sell/bump/upsell)
+  includedProductIds  Json              @default("[]")
+  // Entrega digital
+  /// Formato de entrega exibido na landing/checkout (ex.: "Acesso online + PDFs para baixar")
+  deliveryFormat      String?
+  /// Instruções de acesso exibidas na área do cliente e no e-mail
+  digitalDeliveryNote String?
+  /// Limite de downloads por material (null = sem limite)
+  digitalMaxDownloads Int?
+  /// Validade do acesso em dias (null = sem prazo)
+  digitalValidityDays Int?
+  seoTitle            String?
+  seoDescription      String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  orderItems          OrderItem[]
+  orderBumps          OrderBump[]
+  upsells             Upsell[]
+  downsells           Downsell[]
+  reviews             Review[]
+  priceHistory        PriceHistory[]
+  materials           DigitalMaterial[]
+
+  @@index([active, sortOrder])
+}
+
+/// Histórico de preços (análise de preço × conversão). Pedidos já guardam o preço aplicado.
+model PriceHistory {
+  id            String   @id @default(cuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  oldPriceCents Int?
+  newPriceCents Int
+  adminId       String?
+  createdAt     DateTime @default(now())
+
+  @@index([productId, createdAt])
+}
+
+// ───────────────────────── Clientes / pedidos ─────────────────────────
+
+model Customer {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  name             String
+  phone            String
+  cpf              String?
+  marketingConsent Boolean   @default(false)
+  /// Descadastrou dos lembretes por e-mail (List-Unsubscribe). Confirmações de compra continuam.
+  emailOptOutAt    DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  orders           Order[]
+}
+
+enum OrderStatus {
+  PENDING
+  PIX_GENERATED
+  PAID
+  CANCELLED
+  EXPIRED
+  REFUNDED
+  CHARGEBACK
+  FAILED
+  // Crediário (protocolo próprio — não é cartão): análise manual pelo admin.
+  // CREDIARIO_APROVADO conta como pago e libera o acesso digital.
+  CREDIARIO_PENDENTE
+  CREDIARIO_EM_ANALISE
+  CREDIARIO_APROVADO
+  CREDIARIO_RECUSADO
+  CREDIARIO_CANCELADO
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  EXPIRED
+  REFUNDED
+  CHARGEBACK
+  FAILED
+}
+
+enum OrderSource {
+  STOREFRONT
+  UPSELL
+}
+
+model Order {
+  id                 String         @id @default(cuid())
+  seq                Int            @unique @default(autoincrement())
+  orderNumber        String?        @unique
+  source             OrderSource    @default(STOREFRONT)
+  parentOrderId      String?
+  parentOrder        Order?         @relation("OrderUpsells", fields: [parentOrderId], references: [id], onDelete: SetNull)
+  upsellOrders       Order[]        @relation("OrderUpsells")
+  customerId         String
+  customer           Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  /// Snapshot do cliente no momento da compra
+  customerSnapshot   Json
+  status             OrderStatus    @default(PENDING)
+  paymentStatus      PaymentStatus  @default(PENDING)
+  subtotalCents      Int
+  discountCents      Int            @default(0)
+  totalCents         Int
+  couponId           String?
+  coupon             Coupon?        @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  couponCode         String?
+  paymentMethod      String         @default("PIX")
+  paymentProvider    String         @default("bravopay")
+  transactionId      String?        @unique
+  externalReference  String?        @unique
+  pixCopyPaste       String?
+  pixExpiresAt       DateTime?
+  paymentError       String?
+  paidAmountCents    Int?
+  feeCents           Int?
+  netCents           Int?
+  /// Chave de idempotência gerada no navegador: impede pedido duplicado em duplo clique
+  checkoutToken      String?        @unique
+  /// Token secreto para acessar o pedido por link
+  accessToken        String         @unique
+  metaEventId        String?
+  /// Consentimento de cookies de marketing no momento da compra (Pixel/CAPI)
+  adsConsent         Boolean        @default(false)
+  /// Variantes de teste A/B no momento da compra: { experimentKey: variantKey }
+  experiments        Json?
+  // Atribuição — last touch nos campos principais + first touch
+  utmSource          String?
+  utmMedium          String?
+  utmCampaign        String?
+  utmContent         String?
+  utmTerm            String?
+  firstTouchSource   String?
+  firstTouchMedium   String?
+  firstTouchCampaign String?
+  firstTouchContent  String?
+  firstTouchTerm     String?
+  fbclid             String?
+  gclid              String?
+  ttclid             String?
+  fbp                String?
+  fbc                String?
+  landingPage        String?
+  referrer           String?
+  sessionId          String?
+  visitorId          String?
+  device             String?
+  userAgent          String?
+  ipHash             String?
+  channel            String?
+  // Ciclo de vida
+  paidAt             DateTime?
+  expiredAt          DateTime?
+  cancelledAt        DateTime?
+  refundedAt         DateTime?
+  /// Momento em que o acesso digital foi liberado
+  deliveredAt        DateTime?
+  lastCheckedAt      DateTime?
+  purchaseTrackedAt  DateTime?
+  couponCountedAt    DateTime?
+  notes              String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  items              OrderItem[]
+  payments           Payment[]
+  paymentEvents      PaymentEvent[]
+  upsellEvents       UpsellEvent[]
+  downsellEvents     DownsellEvent[]
+  emailEvents        EmailEvent[]
+  checkoutLead       CheckoutLead?
+  crediario          CrediarioData?
+  quizSessions       QuizSession[]
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+  @@index([customerId])
+  @@index([paidAt])
+}
+
+enum OrderItemKind {
+  PRODUCT
+  ORDER_BUMP
+  UPSELL
+  CROSS_SELL
+}
+
+model OrderItem {
+  id              String          @id @default(cuid())
+  orderId         String
+  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind            OrderItemKind   @default(PRODUCT)
+  productId       String?
+  product         Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  // Snapshot — alterações futuras no produto não mudam o histórico
+  productName     String
+  sku             String
+  category        ProductCategory
+  fulfillment     FulfillmentType
+  quantity        Int
+  unitPriceCents  Int
+  listPriceCents  Int
+  totalPriceCents Int
+  orderBumpId     String?
+  upsellId        String?
+  digitalAccess   DigitalAccess[]
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  orderId       String
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider      String        @default("bravopay")
+  transactionId String        @unique
+  method        String        @default("PIX")
+  status        PaymentStatus @default(PENDING)
+  amountCents   Int
+  feeCents      Int?
+  netCents      Int?
+  paidAt        DateTime?
+  metadata      Json?
+  tracking      Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([orderId])
+}
+
+/// Linha do tempo do pedido/pagamento (requisições, respostas, webhooks, polling, mudanças de status).
+model PaymentEvent {
+  id        String   @id @default(cuid())
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type      String
+  status    String?
+  message   String?
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+enum WebhookStatus {
+  RECEIVED
+  PROCESSED
+  IGNORED
+  FAILED
+}
+
+/// Registro de webhooks — eventId único garante idempotência.
+model WebhookEvent {
+  id             String        @id @default(cuid())
+  provider       String        @default("bravopay")
+  eventId        String        @unique
+  eventType      String
+  status         WebhookStatus @default(RECEIVED)
+  transactionId  String?
+  orderId        String?
+  previousStatus String?
+  newStatus      String?
+  result         String?
+  payloadHash    String
+  payload        Json
+  error          String?
+  attempts       Int           @default(1)
+  receivedAt     DateTime      @default(now())
+  processedAt    DateTime?
+
+  @@index([receivedAt])
+  @@index([transactionId])
+}
+
+enum EmailType {
+  /// Pedido criado (PIX gerado) — instruções de pagamento
+  ORDER_CREATED
+  /// Pagamento confirmado + acesso aos materiais (principal, order bump e upsell)
+  PURCHASE_CONFIRMATION
+  /// Lembrete de PIX pendente
+  PIX_RECOVERY
+  /// Reenvio do acesso (pedido pela cliente ou pelo admin)
+  ACCESS_RESEND
+}
+
+enum EmailStatus {
+  SCHEDULED
+  SENDING
+  SENT
+  FAILED
+  CANCELLED
+  SKIPPED
+}
+
+/// E-mails transacionais (agendamento, envio, reenvio pelo admin e histórico).
+model EmailEvent {
+  id                String      @id @default(cuid())
+  orderId           String
+  order             Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type              EmailType
+  status            EmailStatus @default(SCHEDULED)
+  toEmail           String
+  subject           String?
+  scheduledFor      DateTime    @default(now())
+  sentAt            DateTime?
+  attempts          Int         @default(0)
+  providerMessageId String?
+  error             String?
+  triggeredBy       String      @default("system")
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([status, scheduledFor])
+  @@index([orderId])
+}
+
+/// Acesso seguro a conteúdo digital comprado.
+model DigitalAccess {
+  id           String    @id @default(cuid())
+  orderItemId  String
+  orderItem    OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  token        String    @unique
+  downloads    Int       @default(0)
+  maxDownloads Int?
+  expiresAt    DateTime?
+  lastAccessAt DateTime?
+  revokedAt    DateTime?
+  views        Int       @default(0)
+  createdAt    DateTime  @default(now())
+
+  @@index([orderItemId])
+}
+
+enum MaterialFormat {
+  PDF
+  VIDEO
+  AUDIO
+  WORKBOOK
+  LINK
+  OTHER
+}
+
+enum MaterialStatus {
+  /// Ainda não existe / em produção — NUNCA é anunciado nem entregue
+  PENDING
+  /// Pronto: aparece na landing (se marcado) e é entregue após o pagamento
+  READY
+  /// Retirado de venda e de entrega
+  ARCHIVED
+}
+
+/// Material real de um produto (e-book, diário, áudio, vídeo…). Entregue somente após pagamento confirmado.
+/// Arquivo guardado no próprio banco (MaterialChunk, privado) OU link externo (ex.: vídeo não listado).
+model DigitalMaterial {
+  id            String          @id @default(cuid())
+  productId     String
+  product       Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  title         String
+  /// O que é
+  description   String?
+  /// Como usar
+  howToUse      String?
+  /// Finalidade educativa
+  purpose       String?
+  format        MaterialFormat  @default(PDF)
+  status        MaterialStatus  @default(PENDING)
+  showOnLanding Boolean         @default(true)
+  coverUrl      String?
+  /// "file" (bytes privados no banco) | "link" (URL externa)
+  source        String          @default("file")
+  externalUrl   String?
+  fileName      String?
+  mimeType      String?
+  fileSize      Int?
+  fileSha256    String?
+  /// Upload concluído em vigor (troca de arquivo só vale ao concluir)
+  uploadId      String?
+  chunkCount    Int             @default(0)
+  sortOrder     Int             @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  chunks        MaterialChunk[]
+
+  @@index([productId, status, sortOrder])
+}
+
+/// Partes do arquivo (≤ 3,5 MB cada — limite de corpo das funções da Vercel). Nunca expostas por URL pública.
+model MaterialChunk {
+  id         String          @id @default(cuid())
+  materialId String
+  material   DigitalMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  uploadId   String
+  index      Int
+  data       Bytes
+  size       Int
+  createdAt  DateTime        @default(now())
+
+  @@unique([materialId, uploadId, index])
+}
+
+// ───────────────────────── Ofertas ─────────────────────────
+
+model OrderBump {
+  id                String   @id @default(cuid())
+  name              String
+  productId         String
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?
+  benefit           String?
+  imageUrl          String?
+  /// null = usa o preço atual do produto
+  priceCents        Int?
+  sortOrder         Int      @default(0)
+  active            Boolean  @default(true)
+  /// Mostrar somente quando o carrinho contiver algum destes produtos (vazio = sempre)
+  triggerProductIds Json     @default("[]")
+  /// Oferta em destaque: abre um modal com imagem antes de gerar o PIX (uma vez por checkout)
+  showModal         Boolean  @default(false)
+  modalTitle        String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Upsell {
+  id                String        @id @default(cuid())
+  name              String
+  productId         String
+  product           Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  headline          String
+  title             String
+  description       String?
+  imageUrl          String?
+  priceCents        Int?
+  /// Posição na sequência (Upsell 1 → 2 → 3)
+  sortOrder         Int           @default(0)
+  active            Boolean       @default(true)
+  /// Oferecer somente se o pedido contiver algum destes produtos (vazio = sempre)
+  triggerProductIds Json          @default("[]")
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  events            UpsellEvent[]
+  downsell          Downsell?
+}
+
+enum UpsellAction {
+  VIEW
+  ACCEPT
+  REJECT
+}
+
+/// Downsell: oferta alternativa mais barata, exibida SOMENTE quando o cliente recusa o upsell vinculado.
+/// Um downsell por upsell (1:1). Nunca oferece produto já comprado/incluso.
+model Downsell {
+  id          String          @id @default(cuid())
+  name        String
+  upsellId    String          @unique
+  upsell      Upsell          @relation(fields: [upsellId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  headline    String
+  title       String
+  description String?
+  imageUrl    String?
+  priceCents  Int?
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  events      DownsellEvent[]
+}
+
+enum DownsellAction {
+  VIEW
+  ACCEPT
+  REJECT
+}
+
+model DownsellEvent {
+  id           String         @id @default(cuid())
+  orderId      String
+  order        Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  downsellId   String
+  downsell     Downsell       @relation(fields: [downsellId], references: [id], onDelete: Cascade)
+  action       DownsellAction
+  childOrderId String?
+  priceCents   Int?
+  createdAt    DateTime       @default(now())
+
+  @@unique([orderId, downsellId, action])
+  @@index([downsellId, createdAt])
+}
+
+model UpsellEvent {
+  id           String       @id @default(cuid())
+  orderId      String
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  upsellId     String
+  upsell       Upsell       @relation(fields: [upsellId], references: [id], onDelete: Cascade)
+  action       UpsellAction
+  childOrderId String?
+  priceCents   Int?
+  createdAt    DateTime     @default(now())
+
+  @@unique([orderId, upsellId, action])
+  @@index([upsellId, createdAt])
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+model Coupon {
+  id               String     @id @default(cuid())
+  code             String     @unique
+  type             CouponType @default(PERCENT)
+  /// PERCENT: 1–100 · FIXED: centavos
+  value            Int
+  minSubtotalCents Int?
+  startsAt         DateTime?
+  endsAt           DateTime?
+  maxUses          Int?
+  usedCount        Int        @default(0)
+  /// Produtos aplicáveis (vazio = todos)
+  productIds       Json       @default("[]")
+  active           Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  orders           Order[]
+}
+
+// ───────────────────────── Analytics ─────────────────────────
+
+model AnalyticsSession {
+  id          String           @id
+  visitorId   String
+  customerId  String?
+  firstSeenAt DateTime         @default(now())
+  lastSeenAt  DateTime         @default(now())
+  landingPage String?
+  exitPage    String?
+  referrer    String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
+  fbclid      String?
+  gclid       String?
+  ttclid      String?
+  channel     String?
+  device      String?
+  browser     String?
+  os          String?
+  /// Variantes A/B atribuídas: { experimentKey: variantKey }
+  experiments Json?
+  pageViews   Int              @default(0)
+  events      AnalyticsEvent[]
+
+  @@index([firstSeenAt])
+  @@index([lastSeenAt])
+  @@index([visitorId])
+}
+
+/// Evento próprio. Origem (UTM/click IDs), dispositivo, navegador e SO vêm da sessão
+/// (normalização) e também são copiados aqui para relatórios rápidos.
+model AnalyticsEvent {
+  id          String           @id @default(cuid())
+  sessionId   String
+  session     AnalyticsSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  visitorId   String
+  customerId  String?
+  orderId     String?
+  name        String
+  path        String?
+  productId   String?
+  element     String?
+  valueCents  Int?
+  props       Json?
+  device      String?
+  utmSource   String?
+  utmCampaign String?
+  createdAt   DateTime         @default(now())
+
+  @@index([name, createdAt])
+  @@index([createdAt])
+  @@index([sessionId])
+  @@index([productId, name])
+}
+
+/// Custo de mídia (manual ou importado) → CPA, CAC, ROAS.
+model AdSpend {
+  id         String   @id @default(cuid())
+  date       DateTime @db.Date
+  source     String
+  campaign   String?
+  adset      String?
+  ad         String?
+  spendCents Int
+  createdAt  DateTime @default(now())
+
+  @@index([date])
+}
+
+/// Teste A/B. variants: [{ key, weight, label, value }]
+model Experiment {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String
+  target    String
+  active    Boolean  @default(false)
+  variants  Json     @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ───────────────────────── CMS ─────────────────────────
+
+/// Bloco da landing page. `config` guarda os campos específicos de cada seção.
+model LandingSection {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  type      String
+  label     String
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  title     String?
+  subtitle  String?
+  body      String?
+  imageUrl  String?
+  videoUrl  String?
+  ctaLabel  String?
+  ctaTarget String?
+  config    Json     @default("{}")
+  updatedAt DateTime @updatedAt
+}
+
+model GalleryItem {
+  id          String   @id @default(cuid())
+  title       String
+  category    String
+  imageUrl    String
+  alt         String   @default("")
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  /// Também aparece em "O que você criaria?"
+  inspiration Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Somente avaliações reais, cadastradas e aprovadas pelo admin.
+model Review {
+  id         String    @id @default(cuid())
+  productId  String?
+  product    Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  name       String
+  text       String
+  rating     Int
+  photoUrl   String?
+  videoUrl   String?
+  reviewedAt DateTime?
+  approved   Boolean   @default(false)
+  featured   Boolean   @default(false)
+  sortOrder  Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+}
+
+/// Modelos de mensagem para recuperação manual (WhatsApp/e-mail). Nada é enviado automaticamente.
+model MessageTemplate {
+  id        String   @id @default(cuid())
+  channel   String
+  name      String
+  body      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Trava simples para jobs (evita duas execuções simultâneas).
+model JobLock {
+  name      String   @id
+  lockedAt  DateTime
+  expiresAt DateTime
+}
+
+/// Quem abriu o checkout e digitou contato (nome/e-mail/WhatsApp), mesmo sem gerar pedido.
+/// Usado para o e-mail de "checkout abandonado" e para contato manual no admin.
+model CheckoutLead {
+  id                String       @id @default(cuid())
+  /// Chave gerada no navegador (uma por carrinho/checkout)
+  clientKey         String       @unique
+  /// Token público do link de recuperação (/checkout?recuperar=...)
+  token             String       @unique
+  name              String?
+  email             String?
+  phone             String?
+  items             Json
+  bumpIds           Json?
+  quizSessionId     String?
+  couponCode        String?
+  itemsSummary      String?
+  totalCents        Int          @default(0)
+  sessionId         String?
+  visitorId         String?
+  utmSource         String?
+  utmCampaign       String?
+  device            String?
+  orderId           String?      @unique
+  order             Order?       @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  emailStatus       EmailStatus?
+  emailScheduledFor DateTime?
+  emailSentAt       DateTime?
+  emailAttempts     Int          @default(0)
+  emailCount        Int          @default(0)
+  emailError        String?
+  emailOptOut       Boolean      @default(false)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([emailStatus, emailScheduledFor])
+  @@index([createdAt])
+  @@index([email])
+}
+
+/// Dados do CREDIÁRIO (protocolo próprio do cliente — NÃO é cartão de crédito).
+/// Protocolo, validade e dígitos do CPF ficam cifrados (AES-256-GCM); só o admin
+/// autorizado revela, com registro na auditoria. Nunca vão para Meta/Google/logs.
+model CrediarioData {
+  id               String   @id @default(cuid())
+  orderId          String   @unique
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  protocolEnc      String
+  protocolLast4    String
+  validityEnc      String
+  cpfLast3Enc      String
+  validityFormat   String
+  installments     Int
+  installmentCents Int
+  /// Rótulo exibido ao cliente no momento da compra (ex.: "2x de R$ 59,95")
+  installmentLabel String
+  methodLabel      String
+  analysisNote     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([createdAt])
+}
+
+// ───────────────────────── Mídia (bytes no Postgres + CDN — independe do Vercel Blob) ─────────────────────────
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  alt       String   @default("")
+  category  String   @default("OUTROS")
+  mimeType  String?
+  size      Int?
+  width     Int?
+  height    Int?
+  /// "db" = bytes em `data` servidos por /media/[id].webp · "link" = URL externa
+  storage   String   @default("db")
+  data      Bytes?
+  sourceUrl String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category, createdAt])
+}
+
+// ───────────────────────── Quiz e leads ─────────────────────────
+
+/// Pergunta do quiz (rascunho editável no admin). O site usa a última versão PUBLICADA (QuizVersion).
+model QuizQuestion {
+  id        String       @id @default(cuid())
+  title     String
+  helpText  String?
+  /// single | multiple
+  type      String       @default("single")
+  required  Boolean      @default(true)
+  active    Boolean      @default(true)
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  options   QuizOption[]
+}
+
+model QuizOption {
+  id             String       @id @default(cuid())
+  questionId     String
+  question       QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  label          String
+  /// Resultado editorial que esta resposta reforça (chave de QuizResult) e peso
+  resultKey      String?
+  weight         Int          @default(1)
+  /// Regra de navegação: id da próxima pergunta, "END" (vai para o fim) ou vazio (segue a ordem)
+  nextQuestionId String?
+  sortOrder      Int          @default(0)
+}
+
+/// Resultado editorial (NÃO é diagnóstico). Texto acolhedor + conteúdo educativo + CTA.
+model QuizResult {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  title     String
+  subtitle  String?
+  body      String?
+  /// Pontos educativos: ["...", "..."]
+  points    Json     @default("[]")
+  /// Pergunta de reflexão e exercício prático exibidos no resultado
+  reflection String?
+  exercise   String?
+  ctaLabel  String?
+  ctaTarget String?
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+/// Versão publicada do quiz (snapshot imutável de perguntas, opções, resultados e textos).
+model QuizVersion {
+  id          String        @id @default(cuid())
+  data        Json
+  publishedAt DateTime      @default(now())
+  publishedBy String?
+  sessions    QuizSession[]
+
+  @@index([publishedAt])
+}
+
+/// Sessão do quiz. Anônima até a pessoa informar nome/e-mail (lead identificado).
+/// Respostas podem revelar informações sensíveis: acesso restrito, retenção limitada, nunca vão para anúncios.
+model QuizSession {
+  id                String       @id
+  visitorId         String?
+  trackingSessionId String?
+  quizVersionId     String?
+  quizVersion       QuizVersion? @relation(fields: [quizVersionId], references: [id], onDelete: SetNull)
+  /// Consentimento específico para tratar as respostas (LGPD art. 11)
+  consentAt         DateTime?
+  startedAt         DateTime     @default(now())
+  lastInteractionAt DateTime     @default(now())
+  currentQuestionId String?
+  stepsCompleted    Int          @default(0)
+  completedAt       DateTime?
+  resultKey         String?
+  name              String?
+  email             String?
+  marketingConsent  Boolean      @default(false)
+  identifiedAt      DateTime?
+  offerViewedAt     DateTime?
+  checkoutStartedAt DateTime?
+  orderId           String?
+  order             Order?       @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  purchasedAt       DateTime?
+  utmSource         String?
+  utmMedium         String?
+  utmCampaign       String?
+  utmContent        String?
+  utmTerm           String?
+  channel           String?
+  device            String?
+  anonymizedAt      DateTime?
+  answers           QuizAnswer[]
+
+  @@index([startedAt])
+  @@index([email])
+  @@index([lastInteractionAt])
+}
+
+model QuizAnswer {
+  id            String      @id @default(cuid())
+  sessionId     String
+  session       QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId    String
+  /// Snapshot do texto da pergunta e das opções escolhidas (editar o quiz não altera o histórico)
+  questionTitle String
+  optionIds     Json
+  optionLabels  Json
+  answeredAt    DateTime    @default(now())
+
+  @@unique([sessionId, questionId])
+}
+
+// ───────────────────────── Suporte ─────────────────────────
+
+/// Mensagens do formulário de suporte (também enviadas por e-mail ao atendimento, se configurado).
+model SupportMessage {
+  id          String    @id @default(cuid())
+  name        String
+  email       String
+  orderNumber String?
+  subject     String
+  message     String
+  status      String    @default("OPEN")
+  emailSentAt DateTime?
+  emailError  String?
+  ipHash      String?
+  createdAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  @@index([status, createdAt])
+}
