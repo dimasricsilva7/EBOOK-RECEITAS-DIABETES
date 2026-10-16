@@ -41,11 +41,11 @@ const COMPONENTS: Comp[] = [
   {
     slug: "ebook-diabetes-a-mesa",
     sku: "DM-EBOOK",
-    name: "E-book Diabetes à Mesa (100+ receitas)",
+    name: "E-book Diabetes à Mesa (200+ receitas)",
     category: "EBOOK",
     priceCents: 3790,
-    subtitle: "Mais de 100 receitas práticas e variadas",
-    shortDescription: "O e-book principal, com mais de 100 receitas organizadas por refeição: café da manhã, almoço, jantar, lanches e sobremesas.",
+    subtitle: "Mais de 200 receitas para controlar a diabetes",
+    shortDescription: "O e-book principal, com mais de 200 receitas de baixo índice glicêmico organizadas por refeição: café da manhã, almoço, jantar, lanches e sobremesas liberadas.",
     material: { title: "E-book Diabetes à Mesa", description: "E-book digital com as receitas organizadas por refeição.", howToUse: "Escolha a refeição, confira os ingredientes e siga o passo a passo.", format: "PDF" },
   },
   {
@@ -108,8 +108,8 @@ const OFFERS: Offer[] = [
     sku: "DM-OF-ESS",
     name: "E-book de Receitas",
     badge: "Essencial",
-    subtitle: "O ponto de partida",
-    shortDescription: "O e-book Diabetes à Mesa com mais de 100 receitas práticas e variadas para todas as refeições do dia.",
+    subtitle: "Comece por aqui",
+    shortDescription: "O e-book com mais de 200 receitas para diabéticos: café da manhã, almoço, jantar, lanches e sobremesas liberadas, todas de baixo índice glicêmico.",
     priceCents: 3790,
     sortOrder: 1,
     image: "/img/ebook-cover.png",
@@ -119,9 +119,9 @@ const OFFERS: Offer[] = [
     slug: "kit-pratica",
     sku: "DM-OF-PRA",
     name: "Kit Receitas + Organização",
-    badge: "Prática",
-    subtitle: "Receitas + organização da rotina",
-    shortDescription: "O e-book completo mais o planejamento semanal e o guia de rótulos, para facilitar as compras e a rotina.",
+    badge: "O mais escolhido",
+    subtitle: "Para não errar no dia a dia",
+    shortDescription: "O e-book completo + o planejamento semanal das refeições + o guia de rótulos para nunca mais cair no açúcar escondido do mercado.",
     priceCents: 4790,
     compareAtPriceCents: 6570, // 37,90 + 14,90 + 12,90
     sortOrder: 2,
@@ -132,9 +132,9 @@ const OFFERS: Offer[] = [
     slug: "kit-completa",
     sku: "DM-OF-COM",
     name: "Kit Rotina Alimentar Completa",
-    badge: "Mais vantajoso",
-    subtitle: "Tudo o que você precisa, em um só kit",
-    shortDescription: "O e-book, o planejamento semanal, as coleções de café da manhã, lanches e sobremesas, e o guia de rótulos.",
+    badge: "Melhor custo-benefício",
+    subtitle: "Tudo para controlar a diabetes comendo bem",
+    shortDescription: "O pacote completo: e-book + planejamento semanal + coleções de café da manhã, lanches e sobremesas liberadas + guia de rótulos. Tudo para comer bem e cuidar da glicemia.",
     priceCents: 7990,
     compareAtPriceCents: 9550, // soma de todos os itens avulsos
     featured: true,
@@ -331,29 +331,48 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     type: "hero",
     label: "Primeira tela",
     sortOrder: 1,
-    title: "Receitas que cabem na sua rotina e respeitam a sua *alimentação*.",
+    title: "Mais de *200 receitas* que ajudam a controlar a diabetes — sem passar vontade.",
     subtitle:
-      "Conviver com diabetes não precisa significar comida sem graça ou os mesmos pratos de sempre.\n\nO Diabetes à Mesa reúne mais de 100 receitas práticas, variadas e organizadas por refeição — para você variar o cardápio com mais tranquilidade no dia a dia.",
-    imageUrl: "/img/hero.png",
-    ctaLabel: "Quero as receitas",
+      "Café da manhã, almoço, jantar, lanches e até sobremesas: pratos saborosos e fáceis, pensados para ajudar a manter a sua glicemia sob controle no dia a dia.\n\nChega de arroz com frango sem graça e de cortar tudo o que você gosta. Dá, sim, para comer bem e cuidar da diabetes ao mesmo tempo.",
+    imageUrl: "/img/hero-mockup.png",
+    ctaLabel: "QUERO COMER BEM E CONTROLAR A DIABETES",
     ctaTarget: "checkout",
-    config: j({ eyebrow: "E-book digital de receitas", badges: ["Mais de 100 receitas", "Pagamento via PIX", "Acesso imediato por e-mail", "Leia no celular"], imageAlt: "Mesa com pratos coloridos e equilibrados" }),
+    config: j({ eyebrow: "Receitas para quem tem diabetes", badges: ["Baixo índice glicêmico", "Uma receita por refeição", "Doces liberados", "Acesso imediato"], imageAlt: "E-book Diabetes à Mesa no celular e no tablet" }),
   },
   {
     key: "identificacao",
     type: "identification",
-    label: "Identificação (cards)",
+    label: "Identificação (dores)",
     sortOrder: 2,
-    title: "Talvez você se identifique com isso",
-    subtitle: "No dia a dia, montar refeições variadas e práticas pode virar um desafio.",
-    body: "Organização e variedade deixam a rotina na cozinha mais leve.",
+    title: "Se você tem diabetes, provavelmente já passou por isso",
+    subtitle: "Não é falta de força de vontade. É que ninguém te ensinou a comer bem convivendo com a diabetes.",
+    body: "A boa notícia: o problema nunca foi você. Era só faltar as receitas certas.",
     config: j({
-      eyebrow: "Soa familiar?",
+      eyebrow: "Você não está sozinho(a) nessa",
       items: [
-        { icon: "spiral", title: "Fica sem ideias e acaba repetindo os mesmos pratos.", text: "A rotina aperta e o cardápio vira sempre o mesmo." },
-        { icon: "clock", title: "Falta tempo para planejar as refeições da semana.", text: "Na correria, decidir o que comer vira mais um peso." },
-        { icon: "info", title: "Fica em dúvida na hora de ler os rótulos no mercado.", text: "Tantos nomes e números deixam a escolha confusa." },
-        { icon: "heart", title: "Quer variar sem complicar.", text: "Comida gostosa e prática, sem receita difícil." },
+        { icon: "heart", title: "Sentiu que teria que viver de comida sem graça pro resto da vida.", text: "Depois do diagnóstico, parece que todo prato gostoso virou proibido." },
+        { icon: "spiral", title: "Tem medo de comer um pedaço de bolo e ver a glicemia disparar.", text: "A culpa e o medo tiram todo o prazer de sentar à mesa." },
+        { icon: "clock", title: "Está cansado(a) de comer sempre a mesma coisa.", text: "Arroz, frango e salada todo santo dia — e nenhuma vontade de continuar." },
+        { icon: "info", title: "Já cortou tudo o que ama e mesmo assim a glicose não estabiliza.", text: "Passou vontade, se sentiu privado(a) e não viu o resultado que esperava." },
+        { icon: "compass", title: "Se perde no mercado tentando adivinhar o que pode comer.", text: "Rótulos cheios de açúcar escondido e nenhuma orientação clara." },
+        { icon: "shield", title: "Toma o remédio, mas sabe que a comida é o que mais pesa.", text: "A alimentação é a sua maior aliada no controle da glicemia — quando é a certa." },
+      ],
+    }),
+  },
+  {
+    key: "doces",
+    type: "method",
+    label: "Sim, você pode comer doce",
+    sortOrder: 3,
+    title: "Sim, você pode comer doce tendo diabetes.",
+    subtitle: "A questão nunca foi parar de comer doce. Foi aprender a fazer o doce certo.",
+    body: "São doces de verdade, feitos para quem precisa controlar o açúcar no sangue — sem aquele gosto de adoçante e sem receita impossível.",
+    config: j({
+      eyebrow: "A parte que você mais vai gostar",
+      items: [
+        { icon: "heart", title: "Sobremesas que não disparam a glicemia", text: "Bolos, mousses e docinhos pensados para o seu controle glicêmico." },
+        { icon: "leaf", title: "Trocas inteligentes de ingredientes", text: "O que usar no lugar do açúcar e da farinha branca sem perder o sabor." },
+        { icon: "check", title: "Mate a vontade sem culpa", text: "Dá pra ter um doce no fim de semana e continuar cuidando da saúde." },
       ],
     }),
   },
@@ -361,18 +380,18 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     key: "topicos",
     type: "topics",
     label: "O que você encontra",
-    sortOrder: 3,
-    title: "O que você encontra no Diabetes à Mesa",
-    subtitle: "Um e-book de culinária pensado para a vida real.",
-    body: "Receitas organizadas por refeição, com ingredientes acessíveis e modo de preparo direto ao ponto.",
+    sortOrder: 4,
+    title: "Tudo o que você precisa para comer bem com diabetes",
+    subtitle: "Um cardápio completo, do café da manhã à sobremesa, pensado para o seu controle glicêmico.",
+    body: "Receitas organizadas por refeição, com ingredientes de baixo índice glicêmico, acessíveis e modo de preparo direto ao ponto.",
     config: j({
       eyebrow: "Por dentro do conteúdo",
       items: [
-        { icon: "book", title: "Mais de 100 receitas", text: "Café da manhã, almoço, jantar, lanches e sobremesas." },
-        { icon: "compass", title: "Organizado por refeição", text: "Ache rápido o que preparar em cada momento do dia." },
-        { icon: "clock", title: "Preparo prático", text: "Passo a passo direto e ingredientes acessíveis." },
-        { icon: "leaf", title: "Variedade no cardápio", text: "Ideias para fugir da mesmice e montar pratos diferentes." },
-        { icon: "pen", title: "Planejamento opcional", text: "Materiais de organização semanal para quem quiser ir além." },
+        { icon: "sun", title: "Café da manhã", text: "Comece o dia com energia e sem o pico de glicose logo cedo." },
+        { icon: "book", title: "Almoço e jantar", text: "Pratos completos, saborosos e de baixo índice glicêmico." },
+        { icon: "clock", title: "Lanches da tarde", text: "Opções práticas para não cair na tentação do industrializado." },
+        { icon: "heart", title: "Doces e sobremesas liberados", text: "Mate a vontade de doce sem culpa e sem disparar a glicemia." },
+        { icon: "compass", title: "Guia de substituições", text: "O que trocar para reduzir açúcar e carboidrato sem perder o sabor." },
       ],
     }),
   },
@@ -380,16 +399,16 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     key: "produto",
     type: "showcase",
     label: "Por dentro do e-book (galeria)",
-    sortOrder: 4,
-    title: "Veja como o e-book é por dentro",
-    body: "O Diabetes à Mesa é um e-book digital. Depois da confirmação do pagamento, o acesso chega por e-mail e você lê no celular, tablet ou computador.",
+    sortOrder: 5,
+    title: "Veja por dentro do Diabetes à Mesa",
+    body: "É um e-book digital. Assim que o pagamento é confirmado, o acesso cai no seu e-mail e você lê no celular, tablet ou computador — onde e quando quiser.",
     imageUrl: "/img/showcase.png",
-    ctaLabel: "Quero o e-book",
+    ctaLabel: "QUERO ACESSAR AGORA",
     ctaTarget: "checkout",
     config: j({
       eyebrow: "Por dentro do e-book",
       imageAlt: "E-book Diabetes à Mesa aberto no tablet e no celular",
-      formatItems: ["E-book digital (PDF)", "Leia no celular, tablet ou computador", "Acesso por e-mail após o pagamento", "Receitas organizadas por refeição"],
+      formatItems: ["E-book digital (PDF)", "Leia no celular, tablet ou computador", "Acesso imediato por e-mail", "Receitas organizadas por refeição"],
       previewTitle: "Algumas receitas por dentro",
       excerpts: [],
     }),
@@ -398,13 +417,13 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     key: "oferta",
     type: "offer",
     label: "Oferta (planos)",
-    sortOrder: 5,
-    title: "Escolha o seu kit",
-    subtitle: "Um único pagamento. O acesso é liberado após a confirmação do pagamento.",
-    ctaLabel: "Quero este kit",
+    sortOrder: 6,
+    title: "Escolha como você quer começar hoje",
+    subtitle: "Pagamento único. O acesso é liberado na hora, assim que o PIX é confirmado.",
+    ctaLabel: "QUERO ESTE KIT",
     body: DISCLAIMER,
     config: j({
-      eyebrow: "Ofertas",
+      eyebrow: "Comece agora",
       includes: [],
       steps: [
         { title: "Pagamento via PIX", text: "Você preenche seus dados e recebe o QR Code e o código copia e cola." },
@@ -417,56 +436,90 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     key: "transparencia",
     type: "facts",
     label: "Transparência",
-    sortOrder: 6,
-    title: "Tudo o que você precisa saber antes de comprar",
+    sortOrder: 7,
+    title: "Antes de começar, fique tranquilo(a)",
     config: j({
-      eyebrow: "Transparência",
+      eyebrow: "Transparência total",
       items: [
-        { icon: "book", title: "O que você compra", text: "Um e-book digital de receitas (e os materiais do kit escolhido). Conteúdo de culinária — não é consulta nem plano alimentar individual." },
+        { icon: "book", title: "O que você recebe", text: "Um e-book digital de receitas para diabéticos (e os materiais do kit escolhido)." },
         { icon: "download", title: "Como recebe", text: "Depois da confirmação do pagamento, o acesso chega por e-mail e fica na página do pedido." },
         { icon: "lock", title: "Preço", text: "A partir de {preco}, pagamento único via PIX. Sem mensalidade." },
+        { icon: "shield", title: "Garantia de 7 dias", text: "Não gostou? Você tem 7 dias para pedir o reembolso do valor integral." },
         { icon: "chat", title: "Suporte", text: "Dúvidas sobre acesso ou pagamento? [Fale com o suporte](/suporte)." },
-        { icon: "shield", title: "Termos e privacidade", text: "Consulte os [termos](/termos), a [privacidade](/politica-de-privacidade) e o [reembolso](/trocas-e-devolucoes)." },
-        { icon: "info", title: "Importante", text: "Material educativo de culinária. Não trata nem cura diabetes e não substitui acompanhamento médico ou nutricional." },
+        { icon: "info", title: "Importante", text: "As receitas são uma aliada do seu tratamento, não um substituto. Não trocam a sua medicação nem o acompanhamento do seu médico ou nutricionista." },
       ],
     }),
   },
-  { key: "faq", type: "faq", label: "Perguntas frequentes", sortOrder: 7, title: "Perguntas frequentes", config: j({ eyebrow: "Dúvidas" }) },
+  { key: "faq", type: "faq", label: "Perguntas frequentes", sortOrder: 8, title: "Ainda tem dúvida? A gente responde", config: j({ eyebrow: "Dúvidas frequentes" }) },
   {
     key: "cta-final",
     type: "final_cta",
     label: "CTA final",
-    sortOrder: 8,
-    title: "Leve mais variedade e praticidade para a *sua mesa*.",
-    subtitle: "Receitas organizadas, fáceis de preparar e pensadas para o dia a dia de quem convive com diabetes.",
-    ctaLabel: "Quero as receitas",
+    sortOrder: 9,
+    title: "A sua próxima refeição pode ser o primeiro passo para *controlar a diabetes*.",
+    subtitle: "Comece hoje a comer com prazer, com segurança e sem medo da glicemia.",
+    ctaLabel: "QUERO COMEÇAR AGORA",
     ctaTarget: "checkout",
   },
 ];
 
 const GALLERY: { title: string; image: string }[] = [
-  { title: "Almoço colorido e equilibrado", image: "/img/dish-1.png" },
-  { title: "Café da manhã prático", image: "/img/dish-2.png" },
-  { title: "Lanche rápido do dia a dia", image: "/img/dish-3.png" },
-  { title: "Sobremesa para explorar", image: "/img/dish-4.png" },
+  { title: "Almoço completo e de baixo índice glicêmico", image: "/img/dish-1.png" },
+  { title: "Café da manhã sem pico de glicose", image: "/img/dish-2.png" },
+  { title: "Lanche da tarde prático e seguro", image: "/img/dish-3.png" },
+  { title: "Sobremesa liberada, sem açúcar", image: "/img/dish-4.png" },
 ];
 
 const FAQS: [string, string][] = [
-  ["O que é o Diabetes à Mesa?", "É um e-book digital de culinária com mais de 100 receitas práticas e variadas, organizadas por refeição, para quem convive com diabetes e quer variar o cardápio no dia a dia. É um material educativo de culinária."],
-  ["O e-book trata ou cura diabetes?", "Não. O Diabetes à Mesa é um material educativo de culinária. Ele não é tratamento, não cura diabetes e não garante controle da glicemia. As receitas não substituem o acompanhamento do seu médico ou nutricionista — consulte sempre o seu profissional de saúde antes de mudar sua alimentação."],
-  ["Qual a diferença entre os kits?", "O kit Essencial traz o e-book de receitas. O Prática acrescenta o planejamento semanal e o guia de rótulos. O Completa inclui também as coleções de café da manhã, lanches e sobremesas. Você vê o que cada um inclui na seção de ofertas."],
-  ["Como funciona o acesso?", "Depois que o pagamento é confirmado, o acesso é liberado automaticamente e você recebe um e-mail com o link. Se perder o link, peça um novo em [Meu acesso](/acesso)."],
-  ["Como funciona o pagamento?", "Por PIX. O QR Code e o código copia e cola aparecem logo após você preencher seus dados, e a confirmação é automática."],
-  ["Qual é o valor?", "A partir de {preco}, em pagamento único. Não há mensalidade nem cobrança recorrente."],
-  ["Preciso saber cozinhar bem?", "Não. As receitas têm passo a passo direto e ingredientes acessíveis, pensadas para o dia a dia — inclusive para quem tem pouco tempo."],
-  ["E se eu me arrepender?", "Você pode desistir da compra em até 7 dias após o pagamento e receber o valor de volta, conforme o art. 49 do Código de Defesa do Consumidor. É só escrever para o suporte informando o número do pedido."],
-  ["Como falo com o suporte?", "Pela página [Suporte](/suporte). Respondemos pelo e-mail que você informar."],
+  ["Essas receitas servem para diabetes tipo 1 e tipo 2?", "Sim. As receitas priorizam ingredientes de baixo índice glicêmico e ajudam no controle da glicemia tanto no tipo 1 quanto no tipo 2, além de serem úteis para pré-diabetes. Ainda assim, siga sempre as orientações do seu médico ou nutricionista."],
+  ["Posso mesmo comer doce tendo diabetes?", "Sim, com as receitas certas. O e-book traz doces e sobremesas feitos para não disparar a glicemia, com trocas inteligentes de açúcar e farinha. A ideia é matar a vontade com segurança, dentro do seu controle."],
+  ["As receitas substituem meu remédio ou a insulina?", "Não. A alimentação é a maior aliada do controle da diabetes, mas NÃO substitui a sua medicação, a insulina nem o acompanhamento do seu médico. Use as receitas junto com o seu tratamento, nunca no lugar dele."],
+  ["Preciso de ingredientes caros ou difíceis de achar?", "Não. As receitas usam ingredientes acessíveis, de mercado e feira, com passo a passo simples — pensadas para o dia a dia de quem tem pouco tempo."],
+  ["Como vou receber o material?", "É digital. Assim que o pagamento no PIX é confirmado, o acesso é liberado na hora e você recebe um e-mail com o link. Se perder, é só pedir de novo em [Meu acesso](/acesso)."],
+  ["Qual é o valor?", "A partir de {preco}, em pagamento único via PIX. Sem mensalidade e sem cobrança recorrente."],
+  ["Qual a diferença entre os kits?", "O Essencial traz o e-book de receitas. O Prática acrescenta o planejamento semanal e o guia de rótulos. O Completa inclui ainda as coleções de café da manhã, lanches e sobremesas. Você vê o que cada um inclui na seção de ofertas."],
+  ["E se não for para mim?", "Você tem 7 dias de garantia. Se não gostar, é só escrever para o suporte com o número do pedido e devolvemos o valor integral, conforme o art. 49 do Código de Defesa do Consumidor."],
 ];
 
+/** Versão do conteúdo da landing. Ao subir uma nova copy, incremente para reaplicar uma vez no deploy. */
+const LANDING_VERSION = "dm-2";
+
+/** Reaplica a copy comercial do catálogo (nomes/descrições/badges) a partir dos arrays acima. */
+async function refreshCatalogCopy() {
+  for (const o of OFFERS) {
+    await db.product.updateMany({ where: { slug: o.slug }, data: { name: o.name, subtitle: o.subtitle, shortDescription: o.shortDescription, badge: o.badge, featured: o.featured ?? false, imageUrl: o.image, compareAtPriceCents: o.compareAtPriceCents ?? null } });
+  }
+  const ebook = COMPONENTS.find((c) => c.slug === "ebook-diabetes-a-mesa");
+  if (ebook) await db.product.updateMany({ where: { slug: ebook.slug }, data: { name: ebook.name, subtitle: ebook.subtitle ?? null, shortDescription: ebook.shortDescription } });
+}
+
 async function content() {
-  for (const s of SECTIONS) await db.landingSection.upsert({ where: { key: s.key }, update: {}, create: s });
-  if ((await db.faq.count()) === 0) await db.faq.createMany({ data: FAQS.map(([question, answer], i) => ({ question, answer, sortOrder: i + 1 })) });
-  if ((await db.galleryItem.count()) === 0) await db.galleryItem.createMany({ data: GALLERY.map((g, i) => ({ title: g.title, category: "RECEITAS", imageUrl: g.image, alt: g.title, sortOrder: i + 1 })) });
+  const fresh = (await db.landingSection.count()) === 0;
+  const row = await db.setting.findUnique({ where: { key: "landing_version" } });
+  const current = row?.value != null ? String(row.value) : null;
+  // Sobrescreve a copy canônica uma vez por versão; depois respeita as edições feitas no admin.
+  const apply = fresh || current !== LANDING_VERSION;
+
+  for (const s of SECTIONS) {
+    if (fresh) {
+      await db.landingSection.create({ data: s });
+    } else {
+      const { key, ...data } = s;
+      await db.landingSection.upsert({ where: { key }, update: apply ? data : {}, create: s });
+    }
+  }
+  // Seções de versões antigas que saíram da página ficam inativas (não são apagadas).
+  await db.landingSection.updateMany({ where: { key: { notIn: SECTIONS.map((s) => s.key) } }, data: { active: false } });
+
+  if (apply) {
+    await db.faq.deleteMany({});
+    await db.faq.createMany({ data: FAQS.map(([question, answer], i) => ({ question, answer, sortOrder: i + 1 })) });
+  }
+  if ((await db.galleryItem.count()) === 0) {
+    await db.galleryItem.createMany({ data: GALLERY.map((g, i) => ({ title: g.title, category: "RECEITAS", imageUrl: g.image, alt: g.title, sortOrder: i + 1 })) });
+  }
+  if (apply && !fresh) await refreshCatalogCopy();
+  await db.setting.upsert({ where: { key: "landing_version" }, update: { value: j(LANDING_VERSION) }, create: { key: "landing_version", value: j(LANDING_VERSION) } });
 }
 
 // ───────────────────────── Execução ─────────────────────────

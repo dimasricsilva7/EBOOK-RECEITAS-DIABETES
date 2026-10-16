@@ -9,7 +9,6 @@ import { cfgArr, cfgStr, type SectionData } from "@/server/landing";
 import { formatBRL } from "@/utils/format";
 import type { PublicMaterial, PublicProduct } from "@/types/catalog";
 import { BuyButton, FaqItem, OfferViewTracker, ScrollCta } from "./client";
-import { Illustration } from "./Illustrations";
 import { BookGallery, CycleSteps, type CycleStep, type Slide } from "./interactive";
 
 export type LandingCtx = {
@@ -109,12 +108,12 @@ function BookMockup({ cover, title, subtitle, className = "", priority = false, 
   );
 }
 
-/** Título com trecho em itálico: use *trecho* no admin. */
+/** Título com destaque: use *trecho* no admin — o trecho sai colorido, em negrito e sublinhado. */
 function RichTitle({ text }: { text: string }) {
   const parts = text.split(/\*([^*]+)\*/g);
   return (
     <>
-      {parts.map((p, i) => (i % 2 ? <em key={i} className="text-primary">{p}</em> : p))}
+      {parts.map((p, i) => (i % 2 ? <em key={i} className="font-bold not-italic text-primary underline decoration-accent decoration-[3px] underline-offset-[6px]">{p}</em> : p))}
     </>
   );
 }
@@ -126,66 +125,55 @@ export function Hero({ section, ctx }: P) {
   const eyebrow = cfgStr(section.config, "eyebrow");
   const img = section.imageUrl;
   const [lead, ...rest] = (section.subtitle ?? "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
-  const secondaryLabel = cfgStr(section.config, "secondaryLabel");
+  // Mobile-first: mockup no topo (menor), depois headline → subheadline → CTA, tudo centralizado.
   return (
     <section className="relative overflow-hidden">
-      <div className="pointer-events-none absolute -right-32 -top-32 h-[28rem] w-[28rem] rounded-full bg-accent/25 blur-3xl" aria-hidden="true" />
-      <div className="container-page relative grid items-center gap-10 pb-14 pt-8 sm:pt-12 lg:min-h-[calc(100svh-4rem)] lg:grid-cols-[1.08fr_0.92fr] lg:gap-16 lg:pb-20 lg:pt-10">
-        <div className="animate-rise">
-          {eyebrow && (
-            <p className="inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-secondary">
-              <Icon name="leaf" className="h-3.5 w-3.5" /> {eyebrow}
-            </p>
-          )}
-          <h1 className="mt-6 text-balance font-display text-[2.15rem] leading-[1.06] text-ink sm:text-[3rem] lg:text-[3.4rem]">
-            <RichTitle text={section.title ?? ""} />
-          </h1>
-          {lead && <p className="mt-6 max-w-xl text-[1.0625rem] leading-relaxed text-ink/75 sm:text-lg">{lead}</p>}
-          {rest.map((p, i) => (
-            <p key={i} className="mt-4 max-w-xl border-l-2 border-accent pl-4 text-[15.5px] leading-relaxed text-ink/80">
-              {p}
-            </p>
-          ))}
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Cta label={section.ctaLabel || "Quero conhecer o e-book"} target={section.ctaTarget} ctx={ctx} element="hero_cta" className="btn-primary w-full sm:w-auto" />
-            {secondaryLabel && (
-              <a href={cfgStr(section.config, "secondaryTarget") || "/"} data-cta="hero_quiz" className="btn-light w-full sm:w-auto">
-                <Icon name="compass" className="h-5 w-5 text-primary" /> {secondaryLabel}
-              </a>
-            )}
-          </div>
-          {badges.length > 0 && (
-            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-ink/70">
-              {badges.map((b) => (
-                <li key={b} className="flex items-center gap-2">
-                  <Icon name={badgeIcon(b)} className="h-4 w-4 text-secondary" />
-                  {b}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <div className="relative animate-fade">
+      <div className="pointer-events-none absolute -right-28 -top-36 h-[26rem] w-[26rem] rounded-full bg-accent/25 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute -left-28 top-24 h-[22rem] w-[22rem] rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
+      <div className="container-page relative flex flex-col items-center gap-5 pb-12 pt-5 text-center sm:gap-6 sm:pb-16 sm:pt-9">
+        {/* Mockup do produto no topo — reajustado (menor) no mobile */}
+        <div className="relative w-full animate-fade">
           {img ? (
-            <img src={img} alt={cfgStr(section.config, "imageAlt") || ""} width={900} height={1000} className="aspect-[4/5] w-full rounded-[2rem] object-cover shadow-lift sm:aspect-[5/5.4]" fetchPriority="high" />
+            <img
+              src={img}
+              alt={cfgStr(section.config, "imageAlt") || ctx.product?.name || ""}
+              width={900}
+              height={760}
+              className="mx-auto w-[66%] max-w-[260px] object-contain drop-shadow-2xl sm:w-full sm:max-w-[440px]"
+              fetchPriority="high"
+            />
           ) : (
-            <div className="relative rounded-[2rem] bg-sand px-6 py-12 sm:py-16">
-              <svg viewBox="0 0 400 400" className="pointer-events-none absolute inset-0 h-full w-full text-ink/[0.07]" aria-hidden="true">
-                <circle cx="200" cy="200" r="150" fill="none" stroke="currentColor" />
-                <circle cx="200" cy="200" r="190" fill="none" stroke="currentColor" strokeDasharray="2 6" />
-              </svg>
-              <div className="absolute -left-10 top-6 h-48 w-48 rounded-full bg-accent/40 blur-2xl" aria-hidden="true" />
-              <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-secondary/20 blur-3xl" aria-hidden="true" />
-              <BookMockup cover={ctx.product?.imageUrl} title={ctx.product?.name ?? "Diabetes à Mesa — E-book de Receitas"} subtitle={ctx.product?.subtitle} priority float />
-              <p className="relative mt-8 text-center font-display text-lg italic text-ink/70">Um convite para olhar com mais atenção.</p>
-            </div>
+            <BookMockup cover={ctx.product?.imageUrl} title={ctx.product?.name ?? "Diabetes à Mesa — E-book de Receitas"} subtitle={ctx.product?.subtitle} className="!w-[min(58%,220px)] sm:!w-[min(72%,300px)]" priority float />
           )}
         </div>
+
+        {eyebrow && (
+          <p className="inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-secondary">
+            <Icon name="heart" className="h-3.5 w-3.5" /> {eyebrow}
+          </p>
+        )}
+        <h1 className="max-w-[20ch] text-balance font-display text-[2rem] leading-[1.08] text-ink sm:max-w-[22ch] sm:text-[2.9rem] lg:text-[3.2rem]">
+          <RichTitle text={section.title ?? ""} />
+        </h1>
+        {lead && <p className="max-w-xl text-[1.0625rem] leading-relaxed text-ink/75 sm:text-lg">{lead}</p>}
+        {rest.map((p, i) => (
+          <p key={i} className="max-w-xl text-[15.5px] font-medium leading-relaxed text-ink/80">{p}</p>
+        ))}
+        <div className="mt-1 w-full max-w-md">
+          <Cta label={section.ctaLabel || "Quero as receitas"} target={section.ctaTarget} ctx={ctx} element="hero_cta" className="btn-primary w-full text-base" />
+          <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-muted"><Icon name="lock" className="h-3.5 w-3.5 text-secondary" /> Compra 100% segura · Acesso imediato</p>
+        </div>
+        {badges.length > 0 && (
+          <ul className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-ink/70">
+            {badges.map((b) => (
+              <li key={b} className="flex items-center gap-1.5">
+                <Icon name={badgeIcon(b)} className="h-4 w-4 text-secondary" />
+                {b}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-      <a href="#identificacao" className="absolute bottom-5 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted lg:flex" aria-label="Rolar para a próxima seção">
-        Role
-        <Icon name="arrow" className="h-4 w-4 rotate-90 animate-bob" />
-      </a>
     </section>
   );
 }
@@ -196,26 +184,22 @@ type Card = { icon?: string; title?: string; text?: string; image?: string; alt?
 
 export function Identification({ section }: P) {
   const raw = cfgArr<Card | string>(section.config, "items");
-  const cards: Card[] = raw.map((c) => (typeof c === "string" ? { title: c } : c)).filter((c) => c?.title).slice(0, 4);
+  const cards: Card[] = raw.map((c) => (typeof c === "string" ? { title: c } : c)).filter((c) => c?.title).slice(0, 6);
   return (
     <section className="section paper">
       <div className="container-page">
         <Heading section={section} center />
         {cards.length > 0 && (
-          <div className="mx-auto mt-12 grid max-w-5xl gap-4 sm:grid-cols-2">
+          <div className="mx-auto mt-10 grid max-w-4xl gap-3.5 sm:grid-cols-2 sm:gap-4">
             {cards.map((c, i) => (
-              <Reveal key={i} delay={i * 80}>
-                <article className="group flex h-full flex-col overflow-hidden rounded-card border border-line/80 bg-surface shadow-soft transition duration-300 hover:-translate-y-0.5 hover:shadow-lift sm:flex-row">
-                  <div className="relative aspect-[4/3] shrink-0 overflow-hidden bg-sand/70 sm:aspect-auto sm:w-[42%]">
-                    {c.image ? (
-                      <img src={c.image} alt={c.alt || ""} width={480} height={360} loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]" />
-                    ) : (
-                      <Illustration name={c.icon} className="h-full w-full p-4" />
-                    )}
-                  </div>
-                  <div className="flex flex-1 flex-col justify-center p-6">
-                    <h3 className="font-display text-[1.35rem] leading-snug text-ink">{c.title}</h3>
-                    {c.text && <p className="mt-2 text-[15px] leading-relaxed text-muted">{c.text}</p>}
+              <Reveal key={i} delay={i * 70}>
+                <article className="flex h-full items-start gap-4 rounded-card border border-line/80 bg-surface p-5 text-left shadow-soft transition duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lift">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                    <Icon name={c.icon || "heart"} className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <h3 className="font-display text-[1.15rem] leading-snug text-ink">{c.title}</h3>
+                    {c.text && <p className="mt-1 text-[14.5px] leading-relaxed text-muted">{c.text}</p>}
                   </div>
                 </article>
               </Reveal>
@@ -223,7 +207,7 @@ export function Identification({ section }: P) {
           </div>
         )}
         {section.body && (
-          <p className="mx-auto mt-10 max-w-2xl text-center font-display text-xl italic leading-snug text-ink/80">{section.body}</p>
+          <p className="mx-auto mt-9 max-w-2xl text-center font-display text-xl italic leading-snug text-ink/85">{section.body}</p>
         )}
       </div>
     </section>
