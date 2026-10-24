@@ -160,6 +160,20 @@ type UpsellProduct = Comp & { headline: string; upsellTitle: string; upsellDescr
 /** Produtos de upsell/downsell (também começam PENDENTES). */
 const UPSELL_PRODUCTS: UpsellProduct[] = [
   {
+    slug: "receitas-doces-salgados-50",
+    sku: "DM-UP-50",
+    name: "+50 Receitas de Doces e Salgados Saudáveis",
+    category: "EBOOK" as ProductCategory,
+    priceCents: 2790,
+    shortDescription: "Mais 50 receitas de doces e salgados pensadas para comer sem aumentar a glicemia.",
+    material: { title: "+50 Receitas de Doces e Salgados Saudáveis", description: "50 receitas extras de doces e salgados de baixo índice glicêmico.", howToUse: "Use junto com o e-book principal para ampliar o cardápio.", format: "PDF" },
+    headline: "Quer dobrar as suas opções de doces e salgados?",
+    upsellTitle: "+50 Receitas de Doces e Salgados Saudáveis",
+    upsellDescription: "Mais 50 receitas de doces e salgados — coxinha, pão de queijo, bolos, tortas e sobremesas — todas pensadas para você comer sem aumentar a glicemia. Um complemento perfeito para o seu e-book.",
+    active: true,
+    sortOrder: 1,
+  },
+  {
     slug: "organizador-cardapio-30",
     sku: "DM-UP-ORG30",
     name: "Organizador de Cardápio para 30 Dias",
@@ -170,8 +184,8 @@ const UPSELL_PRODUCTS: UpsellProduct[] = [
     headline: "Que tal organizar o próximo mês inteiro?",
     upsellTitle: "Organizador de Cardápio para 30 Dias",
     upsellDescription: "Um mês inteiro de refeições planejadas: calendário, modelos semanais, listas de compras e materiais complementares para você não repetir ideias e ganhar tempo.",
-    active: true,
-    sortOrder: 1,
+    active: false,
+    sortOrder: 2,
   },
   {
     slug: "minicurso-organizacao-cozinha",
@@ -203,21 +217,21 @@ const UPSELL_PRODUCTS: UpsellProduct[] = [
   },
 ];
 
-/** Downsell vinculado ao upsell "30 dias": uma versão compacta de 7 dias. */
+/** Downsell vinculado ao upsell "+50 receitas": uma versão compacta só de sobremesas. */
 const DOWNSELL = {
-  forUpsellSlug: "organizador-cardapio-30",
+  forUpsellSlug: "receitas-doces-salgados-50",
   product: {
-    slug: "organizador-cardapio-7",
-    sku: "DM-DOWN-ORG7",
-    name: "Organizador de Cardápio para 7 Dias",
-    category: "JOURNAL" as ProductCategory,
-    priceCents: 1790,
-    shortDescription: "Uma versão compacta do organizador: o planejamento e a lista de compras de uma semana.",
-    material: { title: "Organizador de Cardápio — 7 Dias", description: "Planejamento e lista de compras de uma semana.", howToUse: "Planeje a semana e leve a lista ao mercado.", format: "WORKBOOK" as const },
+    slug: "sobremesas-saudaveis-15",
+    sku: "DM-DOWN-15",
+    name: "+15 Sobremesas Saudáveis",
+    category: "EBOOK" as ProductCategory,
+    priceCents: 1290,
+    shortDescription: "Uma seleção menor: 15 sobremesas saudáveis para matar a vontade de doce sem culpa.",
+    material: { title: "+15 Sobremesas Saudáveis", description: "15 receitas de sobremesas de baixo índice glicêmico.", howToUse: "Prepare quando bater a vontade de doce.", format: "PDF" as const },
   },
-  headline: "Prefere começar com uma semana?",
-  title: "Organizador de Cardápio para 7 Dias",
-  description: "Uma versão compacta do organizador, com o planejamento e a lista de compras de uma semana — ideal para testar no seu ritmo.",
+  headline: "Só as sobremesas já tá ótimo?",
+  title: "+15 Sobremesas Saudáveis",
+  description: "Se as 50 receitas completas são demais por agora, leve só esta seleção de 15 sobremesas saudáveis — para matar a vontade de doce sem disparar a glicemia.",
 };
 
 // ───────────────────────── Criação do catálogo ─────────────────────────
@@ -282,10 +296,19 @@ const BUMP_ONLY_PRODUCTS: Comp[] = [
     shortDescription: "Receba as novas receitas adicionadas ao Diabetes à Mesa, para sempre, sem pagar de novo.",
     material: { title: "Atualizações de Receitas", description: "Acesso às novas receitas conforme forem lançadas.", howToUse: "Você recebe por e-mail cada atualização do material.", format: "PDF" },
   },
+  {
+    slug: "videoaulas-preparo",
+    sku: "DM-VIDEO",
+    name: "Vídeo-aulas de Preparo das Receitas",
+    category: "VIDEO",
+    priceCents: 1990,
+    shortDescription: "Vídeo-aulas mostrando o passo a passo de preparo das receitas do livro.",
+    material: { title: "Vídeo-aulas de Preparo", description: "Aulas em vídeo do preparo das receitas do e-book.", howToUse: "Assista e cozinhe junto, no seu ritmo.", format: "VIDEO" },
+  },
 ];
 
 /** Versão do catálogo. Ao mudar a estrutura (ofertas/bumps/preços), incremente para reaplicar no deploy. */
-const CATALOG_VERSION = "dm-2";
+const CATALOG_VERSION = "dm-3";
 
 /** Mudanças estruturais do catálogo aplicadas uma vez por versão (não sobrescreve imagens do admin). */
 async function applyCatalogUpdates() {
@@ -293,10 +316,15 @@ async function applyCatalogUpdates() {
   const essencial = await idOf("kit-essencial");
   const completa = await idOf("kit-completa");
 
-  // Apenas 2 ofertas: desativa a "Prática"; Completo em destaque a R$ 77,90 (de R$ 95,50).
+  // Apenas 2 ofertas: desativa a "Prática"; Completo em destaque a R$ 67,90 (de R$ 95,50).
   await db.product.updateMany({ where: { slug: "kit-pratica" }, data: { active: false, featured: false } });
-  await db.product.updateMany({ where: { slug: "kit-completa" }, data: { priceCents: 7790, compareAtPriceCents: 9550, featured: true } });
+  await db.product.updateMany({ where: { slug: "kit-completa" }, data: { priceCents: 6790, compareAtPriceCents: 9550, featured: true } });
   await db.product.updateMany({ where: { slug: "kit-essencial" }, data: { featured: false } });
+
+  // Upsell: só 1 ativo por vez → o "+50 receitas" passa a ser o principal; o organizador fica inativo.
+  const receitasUp = await db.upsell.findFirst({ where: { product: { slug: "receitas-doces-salgados-50" } } });
+  if (receitasUp) await db.upsell.update({ where: { id: receitasUp.id }, data: { active: true, sortOrder: 1 } });
+  await db.upsell.updateMany({ where: { product: { slug: { in: ["organizador-cardapio-30", "minicurso-organizacao-cozinha", "kit-familia"] } } }, data: { active: false } });
 
   const setBump = async (slug: string, d: { name: string; title: string; benefit: string; priceCents: number; active: boolean; sortOrder: number; triggerProductIds: Prisma.InputJsonValue; showModal: boolean }) => {
     const pid = await idOf(slug);
@@ -311,6 +339,8 @@ async function applyCatalogUpdates() {
   // Bumps do COMPLETO
   await setBump("guia-restaurante-delivery", { name: "Guia Restaurante & Delivery", title: "Guia de Restaurante e Delivery", benefit: "O que pedir fora de casa sem furar a dieta.", priceCents: 1490, active: true, sortOrder: 3, triggerProductIds: j(completa ? [completa] : []), showModal: false });
   await setBump("atualizacoes-vitalicias", { name: "Atualizações Vitalícias", title: "Atualizações Vitalícias de Receitas", benefit: "Novas receitas adicionadas ao e-book, para sempre.", priceCents: 1990, active: true, sortOrder: 4, triggerProductIds: j(completa ? [completa] : []), showModal: false });
+  // Vídeo-aulas: aparece em QUALQUER oferta (sem gatilho) — complementa tanto o Básico quanto o Completo.
+  await setBump("videoaulas-preparo", { name: "Vídeo-aulas de Preparo", title: "Vídeo-aulas de Preparo das Receitas", benefit: "Veja o passo a passo em vídeo e cozinhe junto.", priceCents: 1990, active: true, sortOrder: 5, triggerProductIds: j([]), showModal: false });
   // Desativa bumps antigos que não se encaixam nas 2 ofertas
   for (const slug of ["cafe-da-manha-lanches", "guia-rotulos-ingredientes"]) {
     const pid = await idOf(slug);

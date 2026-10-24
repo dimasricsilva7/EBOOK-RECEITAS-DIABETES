@@ -307,10 +307,10 @@ export function OrderClient({ initial, token, qrSvg, upsell, whatsappUrl, credia
               ))}
             </ol>
             {qrSvg && (
-              <details className="mt-4 text-center">
-                <summary className="cursor-pointer text-sm font-semibold text-primary">Mostrar QR Code</summary>
-                <div className="mx-auto mt-3 w-56 rounded-2xl border border-line bg-white p-3 [&_svg]:h-auto [&_svg]:w-full" role="img" aria-label="QR Code do PIX" dangerouslySetInnerHTML={{ __html: qrSvg }} />
-              </details>
+              <div className="mt-5 text-center">
+                <p className="text-sm font-semibold text-secondary">Ou escaneie o QR Code no app do banco</p>
+                <div className="mx-auto mt-3 w-52 rounded-2xl border border-line bg-white p-3 [&_svg]:h-auto [&_svg]:w-full" role="img" aria-label="QR Code do PIX" dangerouslySetInnerHTML={{ __html: qrSvg }} />
+              </div>
             )}
             <div className="mt-5 flex items-center justify-center gap-2 text-sm text-muted" aria-live="polite">
               <span className="relative flex h-2.5 w-2.5">

@@ -442,43 +442,53 @@ export function CheckoutClient({
             </div>
           </section>
 
-          {/* Order bumps — opcionais e desmarcados por padrão */}
+          {/* Order bumps — opcionais e desmarcados por padrão, com destaque visual */}
           {q.bumps.length > 0 && (
-            <section className="space-y-3" aria-labelledby="h-extras">
-              <div className="px-1">
-                <h2 id="h-extras" className="font-display text-2xl">{bumpTitle}</h2>
-                {bumpText && <p className="text-sm text-muted">{bumpText}</p>}
+            <section className="overflow-hidden rounded-card border-2 border-accent/60 shadow-soft" aria-labelledby="h-extras">
+              <div className="bg-accent px-4 py-2.5 sm:px-5">
+                <span className="text-sm font-extrabold uppercase tracking-wide text-ink">⭐ Ofertas especiais só nesta página</span>
               </div>
-              {q.bumps.map((b) => {
-                const selected = cart.bumpIds.includes(b.id);
-                return (
-                  <label key={b.id} className={`flex cursor-pointer gap-4 rounded-card border p-4 transition sm:p-5 ${selected ? "border-secondary bg-secondary/[0.06]" : "border-dashed border-ink/25 bg-surface hover:border-ink/40"}`}>
-                    <input
-                      type="checkbox"
-                      checked={selected}
-                      onChange={(e) => {
-                        cart.toggleBump(b.id, e.target.checked);
-                        track(e.target.checked ? "order_bump_accept" : "order_bump_reject", { productId: b.productId, element: `bump_${b.id}`, valueCents: b.priceCents, props: { bumpId: b.id } });
-                      }}
-                      className="mt-1 h-5 w-5 shrink-0 accent-[rgb(var(--c-secondary))]"
-                      data-cta={`order_bump_${b.id}`}
-                    />
-                    {b.imageUrl && <img src={b.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover" />}
-                    <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-baseline justify-between gap-x-3">
-                        <span className="font-semibold">{b.title}</span>
-                        <span className="font-semibold tabular-nums text-primary">
-                          + {formatBRL(b.priceCents)}
-                          {b.listPriceCents && <s className="ml-1.5 text-xs font-normal text-muted">{formatBRL(b.listPriceCents)}</s>}
+              <div className="space-y-3 bg-accent/[0.07] p-4 sm:p-5">
+                <div>
+                  <h2 id="h-extras" className="font-display text-xl">{bumpTitle}</h2>
+                  {bumpText && <p className="text-sm text-muted">{bumpText}</p>}
+                </div>
+                {q.bumps.map((b) => {
+                  const selected = cart.bumpIds.includes(b.id);
+                  return (
+                    <label key={b.id} className={`relative flex cursor-pointer gap-4 rounded-2xl border-2 bg-surface p-4 transition ${selected ? "border-success bg-success/[0.07] shadow-soft" : "border-accent/60 hover:border-accent hover:shadow-lift"}`}>
+                      {!selected && <span className="absolute -top-2.5 left-4 rounded-full bg-accent px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-ink shadow-sm">Adicione ao pedido</span>}
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={(e) => {
+                          cart.toggleBump(b.id, e.target.checked);
+                          track(e.target.checked ? "order_bump_accept" : "order_bump_reject", { productId: b.productId, element: `bump_${b.id}`, valueCents: b.priceCents, props: { bumpId: b.id } });
+                        }}
+                        className="mt-1 h-5 w-5 shrink-0 accent-[rgb(var(--c-secondary))]"
+                        data-cta={`order_bump_${b.id}`}
+                      />
+                      {b.imageUrl && <img src={b.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover" />}
+                      <span className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-baseline justify-between gap-x-3">
+                          <span className="font-bold leading-snug">{b.title}</span>
+                          <span className="shrink-0 text-lg font-extrabold tabular-nums text-primary">
+                            + {formatBRL(b.priceCents)}
+                            {b.listPriceCents && <s className="ml-1.5 text-xs font-normal text-muted">{formatBRL(b.listPriceCents)}</s>}
+                          </span>
                         </span>
+                        {b.description && <span className="mt-1 block text-sm leading-relaxed text-muted">{b.description}</span>}
+                        {b.benefit && <span className="mt-1 block text-sm font-medium text-secondary">{b.benefit}</span>}
+                        {selected ? (
+                          <span className="mt-2 block text-sm font-bold text-success">✓ Adicionado ao pedido</span>
+                        ) : (
+                          <span className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-primary">+ Marcar para adicionar</span>
+                        )}
                       </span>
-                      {b.description && <span className="mt-1 block text-sm leading-relaxed text-muted">{b.description}</span>}
-                      {b.benefit && <span className="mt-1 block text-sm text-secondary">{b.benefit}</span>}
-                      {selected && <span className="mt-2 block text-sm font-semibold text-success">✓ Adicionado ao pedido</span>}
-                    </span>
-                  </label>
-                );
-              })}
+                    </label>
+                  );
+                })}
+              </div>
             </section>
           )}
 
