@@ -132,11 +132,18 @@ export function CheckoutClient({
   const openedAt = useRef(Date.now());
 
   useEffect(() => {
+    let quizEmail = "";
     try {
-      const saved = JSON.parse(sessionStorage.getItem(FORM_KEY) ?? "null");
-      if (saved) setForm({ ...EMPTY, ...saved });
+      quizEmail = localStorage.getItem("dm_quiz_email") || "";
     } catch {
       /* ignore */
+    }
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(FORM_KEY) ?? "null");
+      if (saved) setForm({ ...EMPTY, ...saved, email: saved.email || quizEmail });
+      else if (quizEmail) setForm((f) => ({ ...f, email: quizEmail }));
+    } catch {
+      if (quizEmail) setForm((f) => ({ ...f, email: quizEmail }));
     }
   }, []);
   useEffect(() => {

@@ -59,9 +59,16 @@ export function DiabetesQuiz() {
     setEmailErr(null);
     setSending(true);
     const respostas = QUESTIONS.map((q, i) => ({ pergunta: q.q, resposta: answers[i] != null ? q.options[answers[i]!] : null }));
+    // Nosso servidor: captura o lead (admin) + adiciona à Audience da Resend + manda o brinde.
+    fetch("/api/quiz-lead", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email.trim(), respostas }) }).catch(() => {});
+    // Opcional: webhook externo adicional (se o dono plugar outra ferramenta).
     const url = process.env.NEXT_PUBLIC_LEAD_WEBHOOK;
-    if (url) {
-      fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email.trim(), origem: "quiz-diabetes", respostas }) }).catch(() => {});
+    if (url) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email.trim(), origem: "quiz-diabetes", respostas }) }).catch(() => {});
+    // Guarda o e-mail para pré-preencher o checkout.
+    try {
+      localStorage.setItem("dm_quiz_email", email.trim());
+    } catch {
+      /* ignore */
     }
     try {
       metaEvent("Lead", { content_name: "quiz_diabetes" });
@@ -143,7 +150,7 @@ export function DiabetesQuiz() {
           <p>Olha, quase todo mundo que responde esse quiz cai na mesma armadilha: depois do diagnóstico, cortou tudo, ficou no arroz com frango e numa semana já tava de saco cheio. Aí relaxa, come um pão de queijo, o aparelho aponta 170 e vem a culpa.</p>
           <p>O problema nunca foi você. É que te falaram o que <strong>não</strong> comer e ninguém te deu o cardápio do que <strong>pode</strong>.</p>
           <p>Foi pra isso que eu montei o <strong>Diabetes à Mesa</strong>: mais de 250 receitas organizadas por refeição — café, almoço, jantar, lanche e sim, sobremesa — todas pensadas pra não disparar a glicemia. Comida de verdade, ingrediente de mercado, modo de preparo curto.</p>
-          <p className="text-secondary">Enquanto você lê isso, seu guia das 3 sobremesas já tá indo pro seu e-mail. Mas se você já quer o cardápio completo, é aqui embaixo.</p>
+          <p className="text-secondary">Seu e-mail ficou salvo — o guia das 3 sobremesas que não disparam a glicemia chega por lá. E se você já quer o cardápio completo, é aqui embaixo.</p>
         </div>
         <button onClick={goToOffer} className="btn-primary mx-auto mt-8 w-full max-w-sm text-base">Quero o cardápio completo</button>
         <p className="mt-4 text-sm text-muted">Acesso na hora, via PIX. 7 dias de garantia — não gostou, devolvo.</p>

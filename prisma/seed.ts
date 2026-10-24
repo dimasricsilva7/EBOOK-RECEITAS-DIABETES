@@ -162,14 +162,14 @@ const UPSELL_PRODUCTS: UpsellProduct[] = [
   {
     slug: "receitas-doces-salgados-50",
     sku: "DM-UP-50",
-    name: "+50 Receitas de Doces e Salgados Saudáveis",
-    category: "EBOOK" as ProductCategory,
+    name: "+50 Receitas + Vídeos de Preparo",
+    category: "VIDEO" as ProductCategory,
     priceCents: 2790,
-    shortDescription: "Mais 50 receitas de doces e salgados pensadas para comer sem aumentar a glicemia.",
-    material: { title: "+50 Receitas de Doces e Salgados Saudáveis", description: "50 receitas extras de doces e salgados de baixo índice glicêmico.", howToUse: "Use junto com o e-book principal para ampliar o cardápio.", format: "PDF" },
-    headline: "Quer dobrar as suas opções de doces e salgados?",
-    upsellTitle: "+50 Receitas de Doces e Salgados Saudáveis",
-    upsellDescription: "Mais 50 receitas de doces e salgados — coxinha, pão de queijo, bolos, tortas e sobremesas — todas pensadas para você comer sem aumentar a glicemia. Um complemento perfeito para o seu e-book.",
+    shortDescription: "Mais 50 receitas de doces e salgados saudáveis + vídeos ensinando a fazer cada uma, sem aumentar a glicemia.",
+    material: { title: "+50 Receitas + Vídeos de Preparo", description: "50 receitas extras de doces e salgados + vídeos do passo a passo.", howToUse: "Siga as receitas e assista aos vídeos de preparo.", format: "VIDEO" },
+    headline: "Quer dobrar as receitas e ainda ver como fazer cada uma?",
+    upsellTitle: "+50 Receitas + Vídeos de Preparo",
+    upsellDescription: "Mais 50 receitas de doces e salgados — coxinha, pão de queijo, bolos, tortas e sobremesas — e, de bônus, vídeos ensinando o passo a passo de cada receita. Tudo pensado para você comer sem aumentar a glicemia.",
     active: true,
     sortOrder: 1,
   },
@@ -308,7 +308,7 @@ const BUMP_ONLY_PRODUCTS: Comp[] = [
 ];
 
 /** Versão do catálogo. Ao mudar a estrutura (ofertas/bumps/preços), incremente para reaplicar no deploy. */
-const CATALOG_VERSION = "dm-3";
+const CATALOG_VERSION = "dm-4";
 
 /** Mudanças estruturais do catálogo aplicadas uma vez por versão (não sobrescreve imagens do admin). */
 async function applyCatalogUpdates() {
@@ -321,9 +321,10 @@ async function applyCatalogUpdates() {
   await db.product.updateMany({ where: { slug: "kit-completa" }, data: { priceCents: 6790, compareAtPriceCents: 9550, featured: true } });
   await db.product.updateMany({ where: { slug: "kit-essencial" }, data: { featured: false } });
 
-  // Upsell: só 1 ativo por vez → o "+50 receitas" passa a ser o principal; o organizador fica inativo.
+  // Upsell: só 1 ativo por vez → o "+50 receitas + vídeos" é o principal; o organizador fica inativo.
+  await db.product.updateMany({ where: { slug: "receitas-doces-salgados-50" }, data: { name: "+50 Receitas + Vídeos de Preparo", shortDescription: "Mais 50 receitas de doces e salgados saudáveis + vídeos ensinando a fazer cada uma, sem aumentar a glicemia." } });
   const receitasUp = await db.upsell.findFirst({ where: { product: { slug: "receitas-doces-salgados-50" } } });
-  if (receitasUp) await db.upsell.update({ where: { id: receitasUp.id }, data: { active: true, sortOrder: 1 } });
+  if (receitasUp) await db.upsell.update({ where: { id: receitasUp.id }, data: { active: true, sortOrder: 1, name: "+50 Receitas + Vídeos de Preparo", headline: "Quer dobrar as receitas e ainda ver como fazer cada uma?", title: "+50 Receitas + Vídeos de Preparo", description: "Mais 50 receitas de doces e salgados — coxinha, pão de queijo, bolos, tortas e sobremesas — e, de bônus, vídeos ensinando o passo a passo de cada receita. Tudo pensado para você comer sem aumentar a glicemia." } });
   await db.upsell.updateMany({ where: { product: { slug: { in: ["organizador-cardapio-30", "minicurso-organizacao-cozinha", "kit-familia"] } } }, data: { active: false } });
 
   const setBump = async (slug: string, d: { name: string; title: string; benefit: string; priceCents: number; active: boolean; sortOrder: number; triggerProductIds: Prisma.InputJsonValue; showModal: boolean }) => {
@@ -518,7 +519,7 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     label: "Depoimentos (preencher e aprovar no admin)",
     sortOrder: 7,
     title: "Quem já está usando",
-    body: "Depoimentos de leitores reais. Novos depoimentos aparecem aqui quando aprovados no admin.",
+    body: null,
     config: j({ eyebrow: "Histórias de quem vive isso" }),
   },
   {
@@ -608,7 +609,7 @@ const FAQS: [string, string][] = [
 ];
 
 /** Versão do conteúdo da landing. Ao subir uma nova copy, incremente para reaplicar uma vez no deploy. */
-const LANDING_VERSION = "dm-3";
+const LANDING_VERSION = "dm-4";
 
 /** Reaplica a copy comercial do catálogo (nomes/descrições/badges) a partir dos arrays acima. */
 async function refreshCatalogCopy() {
