@@ -41,11 +41,11 @@ const COMPONENTS: Comp[] = [
   {
     slug: "ebook-diabetes-a-mesa",
     sku: "DM-EBOOK",
-    name: "E-book Diabetes à Mesa (200+ receitas)",
+    name: "E-book Diabetes à Mesa (250+ receitas)",
     category: "EBOOK",
     priceCents: 3790,
-    subtitle: "Mais de 200 receitas para controlar a diabetes",
-    shortDescription: "O e-book principal, com mais de 200 receitas de baixo índice glicêmico organizadas por refeição: café da manhã, almoço, jantar, lanches e sobremesas liberadas.",
+    subtitle: "Mais de 250 receitas para controlar a diabetes",
+    shortDescription: "O e-book principal, com mais de 250 receitas de baixo índice glicêmico organizadas por refeição: café da manhã, almoço, jantar, lanches e sobremesas liberadas.",
     material: { title: "E-book Diabetes à Mesa", description: "E-book digital com as receitas organizadas por refeição.", howToUse: "Escolha a refeição, confira os ingredientes e siga o passo a passo.", format: "PDF" },
   },
   {
@@ -107,9 +107,9 @@ const OFFERS: Offer[] = [
     slug: "kit-essencial",
     sku: "DM-OF-ESS",
     name: "E-book de Receitas",
-    badge: "Essencial",
+    badge: "Básico",
     subtitle: "Comece por aqui",
-    shortDescription: "O e-book com mais de 200 receitas para diabéticos: café da manhã, almoço, jantar, lanches e sobremesas liberadas, todas de baixo índice glicêmico.",
+    shortDescription: "O e-book com mais de 250 receitas para diabéticos: café da manhã, almoço, jantar, lanches e sobremesas liberadas, todas de baixo índice glicêmico.",
     priceCents: 3790,
     sortOrder: 1,
     image: "/img/ebook-cover.png",
@@ -132,10 +132,10 @@ const OFFERS: Offer[] = [
     slug: "kit-completa",
     sku: "DM-OF-COM",
     name: "Kit Rotina Alimentar Completa",
-    badge: "Melhor custo-benefício",
+    badge: "Mais escolhido",
     subtitle: "Tudo para controlar a diabetes comendo bem",
     shortDescription: "O pacote completo: e-book + planejamento semanal + coleções de café da manhã, lanches e sobremesas liberadas + guia de rótulos. Tudo para comer bem e cuidar da glicemia.",
-    priceCents: 7990,
+    priceCents: 7790,
     compareAtPriceCents: 9550, // soma de todos os itens avulsos
     featured: true,
     sortOrder: 3,
@@ -262,9 +262,67 @@ async function ensureProduct(p: {
   return product;
 }
 
+/** Produtos que existem só como order bump (não entram em nenhuma oferta). Começam PENDENTES. */
+const BUMP_ONLY_PRODUCTS: Comp[] = [
+  {
+    slug: "guia-restaurante-delivery",
+    sku: "DM-REST",
+    name: "Guia de Restaurante e Delivery",
+    category: "BONUS",
+    priceCents: 1490,
+    shortDescription: "O que pedir no restaurante e no delivery sem furar a dieta e sem disparar a glicemia.",
+    material: { title: "Guia de Restaurante e Delivery", description: "O que escolher ao comer fora ou pedir delivery.", howToUse: "Consulte antes de pedir no restaurante ou no app.", format: "PDF" },
+  },
+  {
+    slug: "atualizacoes-vitalicias",
+    sku: "DM-UPD",
+    name: "Atualizações Vitalícias de Receitas",
+    category: "BONUS",
+    priceCents: 1990,
+    shortDescription: "Receba as novas receitas adicionadas ao Diabetes à Mesa, para sempre, sem pagar de novo.",
+    material: { title: "Atualizações de Receitas", description: "Acesso às novas receitas conforme forem lançadas.", howToUse: "Você recebe por e-mail cada atualização do material.", format: "PDF" },
+  },
+];
+
+/** Versão do catálogo. Ao mudar a estrutura (ofertas/bumps/preços), incremente para reaplicar no deploy. */
+const CATALOG_VERSION = "dm-2";
+
+/** Mudanças estruturais do catálogo aplicadas uma vez por versão (não sobrescreve imagens do admin). */
+async function applyCatalogUpdates() {
+  const idOf = async (slug: string) => (await db.product.findUnique({ where: { slug }, select: { id: true } }))?.id ?? null;
+  const essencial = await idOf("kit-essencial");
+  const completa = await idOf("kit-completa");
+
+  // Apenas 2 ofertas: desativa a "Prática"; Completo em destaque a R$ 77,90 (de R$ 95,50).
+  await db.product.updateMany({ where: { slug: "kit-pratica" }, data: { active: false, featured: false } });
+  await db.product.updateMany({ where: { slug: "kit-completa" }, data: { priceCents: 7790, compareAtPriceCents: 9550, featured: true } });
+  await db.product.updateMany({ where: { slug: "kit-essencial" }, data: { featured: false } });
+
+  const setBump = async (slug: string, d: { name: string; title: string; benefit: string; priceCents: number; active: boolean; sortOrder: number; triggerProductIds: Prisma.InputJsonValue; showModal: boolean }) => {
+    const pid = await idOf(slug);
+    if (!pid) return;
+    const existing = await db.orderBump.findFirst({ where: { productId: pid } });
+    if (existing) await db.orderBump.update({ where: { id: existing.id }, data: d });
+    else await db.orderBump.create({ data: { ...d, productId: pid, description: null } });
+  };
+  // Bumps do BÁSICO (só aparecem quando a oferta escolhida é o Básico)
+  await setBump("sobremesas-e-doces", { name: "Sobremesas Liberadas", title: "Coleção de Sobremesas Liberadas", benefit: "Doces que matam a vontade sem disparar a glicemia.", priceCents: 1290, active: true, sortOrder: 1, triggerProductIds: j(essencial ? [essencial] : []), showModal: false });
+  await setBump("kit-planejamento-semanal", { name: "Planejamento Semanal", title: "Planejamento Semanal + Lista de Compras", benefit: "Monte a semana inteira e vá ao mercado sem dúvida.", priceCents: 990, active: true, sortOrder: 2, triggerProductIds: j(essencial ? [essencial] : []), showModal: false });
+  // Bumps do COMPLETO
+  await setBump("guia-restaurante-delivery", { name: "Guia Restaurante & Delivery", title: "Guia de Restaurante e Delivery", benefit: "O que pedir fora de casa sem furar a dieta.", priceCents: 1490, active: true, sortOrder: 3, triggerProductIds: j(completa ? [completa] : []), showModal: false });
+  await setBump("atualizacoes-vitalicias", { name: "Atualizações Vitalícias", title: "Atualizações Vitalícias de Receitas", benefit: "Novas receitas adicionadas ao e-book, para sempre.", priceCents: 1990, active: true, sortOrder: 4, triggerProductIds: j(completa ? [completa] : []), showModal: false });
+  // Desativa bumps antigos que não se encaixam nas 2 ofertas
+  for (const slug of ["cafe-da-manha-lanches", "guia-rotulos-ingredientes"]) {
+    const pid = await idOf(slug);
+    if (!pid) continue;
+    const b = await db.orderBump.findFirst({ where: { productId: pid } });
+    if (b) await db.orderBump.update({ where: { id: b.id }, data: { active: false } });
+  }
+}
+
 async function catalog() {
   const bySlug = new Map<string, string>();
-  for (const c of COMPONENTS) {
+  for (const c of [...COMPONENTS, ...BUMP_ONLY_PRODUCTS]) {
     const prod = await ensureProduct({ ...c, active: true, featured: false, sortOrder: 0 });
     bySlug.set(c.slug, prod.id);
   }
@@ -331,13 +389,13 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     type: "hero",
     label: "Primeira tela",
     sortOrder: 1,
-    title: "Mais de *200 receitas* que ajudam a controlar a diabetes — sem passar vontade.",
+    title: "Mais de *250 receitas* pra comer bem sem o medo de ver a glicemia subir.",
     subtitle:
-      "Café da manhã, almoço, jantar, lanches e até sobremesas: pratos saborosos e fáceis, pensados para ajudar a manter a sua glicemia sob controle no dia a dia.\n\nChega de arroz com frango sem graça e de cortar tudo o que você gosta. Dá, sim, para comer bem e cuidar da diabetes ao mesmo tempo.",
+      "Café, almoço, jantar, lanche e até doce — tudo pensado pra não disparar o açúcar. Comida de verdade, de mercado, com preparo rápido.\n\nNão é dieta de sofrimento. É o cardápio que ninguém te deu depois do diagnóstico.",
     imageUrl: "/img/hero-mockup.png",
-    ctaLabel: "QUERO COMER BEM E CONTROLAR A DIABETES",
+    ctaLabel: "QUERO AS RECEITAS",
     ctaTarget: "checkout",
-    config: j({ eyebrow: "Receitas para quem tem diabetes", badges: ["Baixo índice glicêmico", "Uma receita por refeição", "Doces liberados", "Acesso imediato"], imageAlt: "E-book Diabetes à Mesa no celular e no tablet" }),
+    config: j({ eyebrow: "Pra quem tem diabetes e cansou de comer sem graça", badges: ["Baixo índice glicêmico", "Doces liberados", "Garantia de 7 dias", "Acesso imediato"], imageAlt: "E-book Diabetes à Mesa no celular e no tablet" }),
   },
   {
     key: "identificacao",
@@ -414,10 +472,30 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     }),
   },
   {
+    key: "autor",
+    type: "author",
+    label: "Quem está por trás (foto + história no admin)",
+    sortOrder: 6,
+    title: "Quem está por trás disso",
+    body:
+      "Oi, eu sou [SEU NOME]. [Eu / minha mãe / meu pai] convive com diabetes tipo 2 há [X] anos. Lembro do dia do diagnóstico: a médica listou tudo que tinha que sair do prato e foi embora — ninguém disse o que PODIA entrar. Durante meses foi arroz, frango e cara feia, até eu começar a testar troca por troca o que mantinha o sabor sem subir a glicemia. As receitas que deram certo viraram esse e-book. Sem fórmula mágica, sem promessa de cura — só comida boa que não te sabota.",
+    // confirmed:"false" mantém a seção OCULTA até o dono subir a foto e confirmar a autoria no admin.
+    config: j({ eyebrow: "Quem fez isso", name: "[SEU NOME]", role: "", confirmed: "false", imageAlt: "Foto do autor" }),
+  },
+  {
+    key: "prova-social",
+    type: "reviews",
+    label: "Depoimentos (preencher e aprovar no admin)",
+    sortOrder: 7,
+    title: "Quem já está usando",
+    body: "Depoimentos de leitores reais. Novos depoimentos aparecem aqui quando aprovados no admin.",
+    config: j({ eyebrow: "Histórias de quem vive isso" }),
+  },
+  {
     key: "oferta",
     type: "offer",
     label: "Oferta (planos)",
-    sortOrder: 6,
+    sortOrder: 8,
     title: "Escolha como você quer começar hoje",
     subtitle: "Pagamento único. O acesso é liberado na hora, assim que o PIX é confirmado.",
     ctaLabel: "QUERO ESTE KIT",
@@ -436,7 +514,7 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     key: "transparencia",
     type: "facts",
     label: "Transparência",
-    sortOrder: 7,
+    sortOrder: 9,
     title: "Antes de começar, fique tranquilo(a)",
     config: j({
       eyebrow: "Transparência total",
@@ -450,17 +528,35 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
       ],
     }),
   },
-  { key: "faq", type: "faq", label: "Perguntas frequentes", sortOrder: 8, title: "Ainda tem dúvida? A gente responde", config: j({ eyebrow: "Dúvidas frequentes" }) },
+  { key: "faq", type: "faq", label: "Perguntas frequentes", sortOrder: 10, title: "Ainda tem dúvida? A gente responde", config: j({ eyebrow: "Dúvidas frequentes" }) },
   {
     key: "cta-final",
     type: "final_cta",
     label: "CTA final",
-    sortOrder: 9,
+    sortOrder: 11,
     title: "A sua próxima refeição pode ser o primeiro passo para *controlar a diabetes*.",
     subtitle: "Comece hoje a comer com prazer, com segurança e sem medo da glicemia.",
     ctaLabel: "QUERO COMEÇAR AGORA",
     ctaTarget: "checkout",
   },
+];
+
+/**
+ * Depoimentos fornecidos pelo dono, com a experiência real ainda a preencher ([colchetes]).
+ * Entram como RASCUNHO (approved:false) — NÃO aparecem no site até o dono completar o texto
+ * e aprovar em Admin → Avaliações. Nunca publicar depoimento incompleto/inventado.
+ */
+const REVIEWS: { name: string; text: string }[] = [
+  { name: "Ana — Diabetes tipo 2", text: "Oi, sou a Ana e convivo com diabetes tipo 2 há 8 anos. Conheci o Diabetes à Mesa e resolvi experimentar porque queria encontrar mais variedade para minha alimentação. O que mais gostei foi [experiência real com o produto]." },
+  { name: "Ricardo — Diabetes tipo 1", text: "Olá, sou o Ricardo, tenho diabetes tipo 1 há 6 anos e adquiri o Diabetes à Mesa para encontrar novas ideias para minhas refeições. Minha experiência com o material foi [experiência real]." },
+  { name: "Márcia — Diabetes tipo 2", text: "Meu nome é Márcia e vivo com diabetes tipo 2 há 12 anos. Antes, eu tinha dificuldade com [dificuldade real]. Depois de conhecer o Diabetes à Mesa, encontrei [benefício efetivamente percebido]." },
+  { name: "Juliano — Diabetes tipo 1", text: "Oi, pessoal! Sou o Juliano e tenho diabetes tipo 1 há 4 anos. Comprei o Diabetes à Mesa porque procurava receitas diferentes. Gostei especialmente de [característica real do material]." },
+  { name: "Sandra — Diabetes tipo 2", text: "Sou a Sandra, convivo com diabetes tipo 2 há 10 anos e gosto de experimentar receitas novas. O Diabetes à Mesa me chamou a atenção por [motivo real]. Minha parte favorita é [receita ou recurso que realmente utilizou]." },
+  { name: "Marcelo — Diabetes tipo 1", text: "Olá! Meu nome é Marcelo e tenho diabetes tipo 1 há 9 anos. Eu procurava um material que me ajudasse com [necessidade real]. No Diabetes à Mesa, achei interessante [conteúdo específico]." },
+  { name: "Fernanda — Diabetes tipo 2", text: "Oi, sou a Fernanda e tenho diabetes tipo 2 há 7 anos. Decidi conhecer o Diabetes à Mesa porque queria mais ideias para minhas refeições. O que mais me agradou foi [benefício real percebido]." },
+  { name: "Roberto — Diabetes tipo 1", text: "Sou o Roberto e convivo com diabetes tipo 1 há 11 anos. Conheci o Diabetes à Mesa por [forma como conheceu] e resolvi comprar para [motivo real]. Gostei de [detalhe específico do material]." },
+  { name: "Patrícia — Diabetes tipo 2", text: "Meu nome é Patrícia e tenho diabetes tipo 2 há 5 anos. Eu buscava mais ideias para organizar minhas refeições e encontrei o Diabetes à Mesa. O que achei mais útil foi [recurso utilizado]." },
+  { name: "Eduardo — Diabetes tipo 1", text: "Oi, sou o Eduardo e tenho diabetes tipo 1 há 3 anos. Comprei o Diabetes à Mesa esperando encontrar novas opções para minha alimentação. Depois de utilizar o material, minha opinião é [avaliação sincera]." },
 ];
 
 const GALLERY: { title: string; image: string }[] = [
@@ -477,17 +573,18 @@ const FAQS: [string, string][] = [
   ["Preciso de ingredientes caros ou difíceis de achar?", "Não. As receitas usam ingredientes acessíveis, de mercado e feira, com passo a passo simples — pensadas para o dia a dia de quem tem pouco tempo."],
   ["Como vou receber o material?", "É digital. Assim que o pagamento no PIX é confirmado, o acesso é liberado na hora e você recebe um e-mail com o link. Se perder, é só pedir de novo em [Meu acesso](/acesso)."],
   ["Qual é o valor?", "A partir de {preco}, em pagamento único via PIX. Sem mensalidade e sem cobrança recorrente."],
-  ["Qual a diferença entre os kits?", "O Essencial traz o e-book de receitas. O Prática acrescenta o planejamento semanal e o guia de rótulos. O Completa inclui ainda as coleções de café da manhã, lanches e sobremesas. Você vê o que cada um inclui na seção de ofertas."],
+  ["Qual a diferença entre o Básico e o Completo?", "O Básico é o e-book com mais de 250 receitas. O Completo inclui o e-book + o planejamento semanal, as coleções de café da manhã, lanches e sobremesas liberadas, e o guia de rótulos — tudo com desconto. Você vê o que cada um inclui na seção de ofertas."],
   ["E se não for para mim?", "Você tem 7 dias de garantia. Se não gostar, é só escrever para o suporte com o número do pedido e devolvemos o valor integral, conforme o art. 49 do Código de Defesa do Consumidor."],
 ];
 
 /** Versão do conteúdo da landing. Ao subir uma nova copy, incremente para reaplicar uma vez no deploy. */
-const LANDING_VERSION = "dm-2";
+const LANDING_VERSION = "dm-3";
 
 /** Reaplica a copy comercial do catálogo (nomes/descrições/badges) a partir dos arrays acima. */
 async function refreshCatalogCopy() {
   for (const o of OFFERS) {
-    await db.product.updateMany({ where: { slug: o.slug }, data: { name: o.name, subtitle: o.subtitle, shortDescription: o.shortDescription, badge: o.badge, featured: o.featured ?? false, imageUrl: o.image, compareAtPriceCents: o.compareAtPriceCents ?? null } });
+    // NÃO sobrescreve imageUrl: preserva as imagens reais enviadas no admin (/media/...).
+    await db.product.updateMany({ where: { slug: o.slug }, data: { name: o.name, subtitle: o.subtitle, shortDescription: o.shortDescription, badge: o.badge, featured: o.featured ?? false, compareAtPriceCents: o.compareAtPriceCents ?? null } });
   }
   const ebook = COMPONENTS.find((c) => c.slug === "ebook-diabetes-a-mesa");
   if (ebook) await db.product.updateMany({ where: { slug: ebook.slug }, data: { name: ebook.name, subtitle: ebook.subtitle ?? null, shortDescription: ebook.shortDescription } });
@@ -501,11 +598,13 @@ async function content() {
   const apply = fresh || current !== LANDING_VERSION;
 
   for (const s of SECTIONS) {
-    if (fresh) {
+    const { key, ...data } = s;
+    const existing = fresh ? null : await db.landingSection.findUnique({ where: { key } });
+    if (!existing) {
       await db.landingSection.create({ data: s });
-    } else {
-      const { key, ...data } = s;
-      await db.landingSection.upsert({ where: { key }, update: apply ? data : {}, create: s });
+    } else if (apply) {
+      // Atualiza textos/config, mas PRESERVA a imagem enviada no admin (/media/...).
+      await db.landingSection.update({ where: { key }, data: { ...data, imageUrl: existing.imageUrl ?? data.imageUrl, active: true } });
     }
   }
   // Seções de versões antigas que saíram da página ficam inativas (não são apagadas).
@@ -518,6 +617,10 @@ async function content() {
   if ((await db.galleryItem.count()) === 0) {
     await db.galleryItem.createMany({ data: GALLERY.map((g, i) => ({ title: g.title, category: "RECEITAS", imageUrl: g.image, alt: g.title, sortOrder: i + 1 })) });
   }
+  // Depoimentos como RASCUNHO (não aprovados → não aparecem até o dono completar e aprovar).
+  if ((await db.review.count()) === 0) {
+    await db.review.createMany({ data: REVIEWS.map((r, i) => ({ name: r.name, text: r.text, rating: 5, approved: false, sortOrder: i + 1 })) });
+  }
   if (apply && !fresh) await refreshCatalogCopy();
   await db.setting.upsert({ where: { key: "landing_version" }, update: { value: j(LANDING_VERSION) }, create: { key: "landing_version", value: j(LANDING_VERSION) } });
 }
@@ -526,8 +629,11 @@ async function content() {
 
 async function main() {
   await catalog();
+  const cvRow = await db.setting.findUnique({ where: { key: "catalog_version" } });
+  const cv = cvRow?.value != null ? String(cvRow.value) : null;
+  if (cv !== CATALOG_VERSION) await applyCatalogUpdates();
   await content();
-  await db.setting.upsert({ where: { key: "catalog_version" }, update: { value: j("dm-1") }, create: { key: "catalog_version", value: j("dm-1") } });
+  await db.setting.upsert({ where: { key: "catalog_version" }, update: { value: j(CATALOG_VERSION) }, create: { key: "catalog_version", value: j(CATALOG_VERSION) } });
   const plans = await db.product.count({ where: { category: "PROGRAM", active: true } });
   console.log(`Seed ok — Diabetes à Mesa: ${plans} ofertas, ${BUMPS.length} bumps, ${UPSELL_PRODUCTS.length} upsells, 1 downsell. Materiais PENDENTES (suba os arquivos reais para abrir as vendas).`);
 }

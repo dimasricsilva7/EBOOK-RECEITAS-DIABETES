@@ -38,10 +38,16 @@ export async function saveBump(_: ActionResult, fd: FormData): Promise<ActionRes
       modalTitle: optStr(fd, "modalTitle", 140),
     };
     if (!data.title) return { error: "Informe o título do bump." };
-    // No máximo 3 order bumps ativos (limite também aplicado no checkout).
+    // Limite por OFERTA: cada bump é segmentado por "triggerProductIds", então o checkout mostra
+    // só os bumps da oferta escolhida. Evita passar de 3 bumps exibidos juntos para o mesmo gatilho.
     if (data.active) {
-      const activeCount = await db.orderBump.count({ where: { active: true, ...(id ? { NOT: { id } } : {}) } });
-      if (activeCount >= 3) return { error: "Já existem 3 order bumps ativos (máximo). Desative um antes de ativar outro." };
+      const triggers = new Set(data.triggerProductIds);
+      const others = await db.orderBump.findMany({ where: { active: true, ...(id ? { NOT: { id } } : {}) }, select: { triggerProductIds: true } });
+      const sameGroup = others.filter((o) => {
+        const t = Array.isArray(o.triggerProductIds) ? (o.triggerProductIds as string[]) : [];
+        return triggers.size === 0 || t.length === 0 || t.some((x) => triggers.has(x));
+      });
+      if (sameGroup.length >= 3) return { error: "Já existem 3 order bumps ativos que aparecem juntos (mesma oferta). Desative um antes de ativar outro." };
     }
     if (id) {
       const before = await db.orderBump.findUniqueOrThrow({ where: { id } });
