@@ -429,6 +429,20 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     config: j({ eyebrow: "Pra quem tem diabetes e cansou de comer sem graça", badges: ["Baixo índice glicêmico", "Doces liberados", "Garantia de 7 dias", "Acesso imediato"], imageAlt: "E-book Diabetes à Mesa no celular e no tablet" }),
   },
   {
+    key: "stats",
+    type: "stats",
+    label: "Faixa de números",
+    sortOrder: 2,
+    config: j({
+      items: [
+        { icon: "book", value: "250+", label: "receitas" },
+        { icon: "sun", value: "5", label: "refeições por dia" },
+        { icon: "leaf", value: "Baixo IG", label: "índice glicêmico" },
+        { icon: "download", value: "2 min", label: "acesso imediato" },
+      ],
+    }),
+  },
+  {
     key: "identificacao",
     type: "identification",
     label: "Identificação (dores)",
@@ -445,6 +459,30 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
         { icon: "info", title: "Já cortou tudo o que ama e mesmo assim a glicose não estabiliza.", text: "Passou vontade, se sentiu privado(a) e não viu o resultado que esperava." },
         { icon: "compass", title: "Se perde no mercado tentando adivinhar o que pode comer.", text: "Rótulos cheios de açúcar escondido e nenhuma orientação clara." },
         { icon: "shield", title: "Toma o remédio, mas sabe que a comida é o que mais pesa.", text: "A alimentação é a sua maior aliada no controle da glicemia — quando é a certa." },
+      ],
+    }),
+  },
+  {
+    key: "compare",
+    type: "compare",
+    label: "Antes × Depois",
+    sortOrder: 4,
+    title: "A diferença que o cardápio certo faz",
+    subtitle: "Como é a sua rotina hoje — e como ela pode ser a partir de hoje.",
+    config: j({
+      beforeTitle: "Como costuma ser hoje",
+      before: [
+        "Arroz, frango e salada todo dia, sem vontade de comer",
+        "Medo de comer um pedaço de bolo e ver a glicemia disparar",
+        "Perdido(a) no mercado sem saber o que pode",
+        "Cortar tudo o que gosta e se sentir privado(a)",
+      ],
+      afterTitle: "Com o Diabetes à Mesa",
+      after: [
+        "Mais de 250 receitas para variar o cardápio todo dia",
+        "Doces e sobremesas que não disparam a glicemia",
+        "Guia de rótulos para comprar com segurança",
+        "Comer com prazer enquanto cuida da sua saúde",
       ],
     }),
   },
@@ -571,6 +609,10 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     ctaTarget: "checkout",
   },
 ];
+// Ordem das seções = posição no array acima (evita renumerar manualmente).
+SECTIONS.forEach((s, i) => {
+  s.sortOrder = i + 1;
+});
 
 /**
  * Depoimentos fornecidos pelo dono, com a experiência real ainda a preencher ([colchetes]).
@@ -609,7 +651,7 @@ const FAQS: [string, string][] = [
 ];
 
 /** Versão do conteúdo da landing. Ao subir uma nova copy, incremente para reaplicar uma vez no deploy. */
-const LANDING_VERSION = "dm-4";
+const LANDING_VERSION = "dm-5";
 
 /** Reaplica a copy comercial do catálogo (nomes/descrições/badges) a partir dos arrays acima. */
 async function refreshCatalogCopy() {

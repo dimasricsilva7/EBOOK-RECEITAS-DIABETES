@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Fragment } from "react";
-import { Audience, Author, Content, Cycle, Facts, Experience, Faq, FinalCta, GallerySection, Hero, Identification, Limits, Method, Offer, Patterns, Reviews, Showcase, Topics, Trust, Video, type LandingCtx } from "@/components/landing/Sections";
+import { Audience, Author, Compare, Content, Cycle, Facts, Experience, Faq, FinalCta, GallerySection, Hero, Identification, Limits, Method, Offer, Patterns, Reviews, Showcase, Stats, Topics, Trust, Video, type LandingCtx } from "@/components/landing/Sections";
 import { cfgStr } from "@/server/landing";
 import { LandingTracker, QuizWelcome, StickyMobileCTA } from "@/components/landing/client";
 import { valueFor } from "@/lib/experiments";
@@ -108,6 +108,8 @@ export default async function LandingPage() {
     author: Author,
     cycle: Cycle,
     facts: Facts,
+    stats: Stats,
+    compare: Compare,
   };
   // Âncoras para os botões e o menu (#como-funciona, #conteudo-do-ebook, #autora…); oferta e FAQ já têm id próprio
   const DEFAULT_ANCHOR: Record<string, string> = { identification: "identificacao", cycle: "como-funciona", topics: "conteudo-do-ebook", showcase: "por-dentro", author: "autora", method: "o-que-esperar", facts: "transparencia", audience: "para-quem" };

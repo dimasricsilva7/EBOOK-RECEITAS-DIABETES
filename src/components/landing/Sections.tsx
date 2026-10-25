@@ -714,6 +714,77 @@ export function Reviews({ section, ctx }: P) {
   );
 }
 
+// ───────────── Faixa de números (stats) ─────────────
+
+export function Stats({ section }: P) {
+  const items = cfgArr<{ icon?: string; value?: string; label?: string }>(section.config, "items").filter((x) => x?.value);
+  if (!items.length) return null;
+  return (
+    <section className="py-8 sm:py-10">
+      <div className="container-page">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+          {items.map((it, i) => (
+            <Reveal key={i} delay={i * 60}>
+              <div className="flex h-full flex-col items-center rounded-card border border-line bg-surface px-3 py-5 text-center shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift">
+                <Icon name={it.icon || "check"} className="h-6 w-6 text-primary" />
+                <span className="mt-2 font-display text-2xl leading-none text-ink sm:text-3xl">{it.value}</span>
+                <span className="mt-1.5 text-xs leading-snug text-muted sm:text-sm">{it.label}</span>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ───────────── Antes × Depois (compare) ─────────────
+
+export function Compare({ section }: P) {
+  const before = cfgArr<string>(section.config, "before").filter(Boolean);
+  const after = cfgArr<string>(section.config, "after").filter(Boolean);
+  if (!before.length && !after.length) return null;
+  return (
+    <section className="section">
+      <div className="container-page">
+        <Heading section={section} center />
+        <div className="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-2 sm:gap-5">
+          <Reveal>
+            <div className="h-full rounded-card border border-line bg-sand/50 p-6 sm:p-7">
+              <p className="flex items-center gap-2.5 font-display text-xl text-ink/70">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-danger/15 text-lg font-bold text-danger">✕</span>
+                {cfgStr(section.config, "beforeTitle") || "Como costuma ser hoje"}
+              </p>
+              <ul className="mt-5 space-y-3.5">
+                {before.map((t) => (
+                  <li key={t} className="flex gap-3 text-[15px] leading-relaxed text-muted">
+                    <span className="mt-0.5 font-bold text-danger">✕</span> {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+          <Reveal delay={120}>
+            <div className="h-full rounded-card border-2 border-primary/40 bg-primary/[0.05] p-6 shadow-soft sm:p-7">
+              <p className="flex items-center gap-2.5 font-display text-xl text-ink">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary/15 text-primary"><Icon name="check" className="h-4 w-4" strokeWidth={2.5} /></span>
+                {cfgStr(section.config, "afterTitle") || "Com o Diabetes à Mesa"}
+              </p>
+              <ul className="mt-5 space-y-3.5">
+                {after.map((t) => (
+                  <li key={t} className="flex gap-3 text-[15px] leading-relaxed text-ink/85">
+                    <Icon name="check" className="mt-0.5 h-5 w-5 shrink-0 text-primary" strokeWidth={2} /> {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ───────────── Oferta (produto único) ─────────────
 
 export function Offer({ section, ctx }: P) {
