@@ -236,8 +236,12 @@ export async function saveReview(_: ActionResult, fd: FormData): Promise<ActionR
     const productId = optStr(fd, "productId", 40);
     const data = {
       name: str(fd, "name", 80),
+      title: optStr(fd, "title", 140),
       text: str(fd, "text", 2000),
       rating,
+      ageLabel: optStr(fd, "ageLabel", 40),
+      timeAgo: optStr(fd, "timeAgo", 40),
+      verified: bool(fd, "verified"),
       photoUrl: url(fd, "photoUrl"),
       videoUrl: url(fd, "videoUrl"),
       productId: productId || null,

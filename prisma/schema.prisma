@@ -791,8 +791,16 @@ model Review {
   productId  String?
   product    Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
   name       String
+  /// Título curto em negrito do depoimento (ex.: "Finalmente comida gostosa")
+  title      String?
   text       String
   rating     Int
+  /// Idade exibida (ex.: "54 anos")
+  ageLabel   String?
+  /// Tempo exibido (ex.: "há 3 semanas")
+  timeAgo    String?
+  /// "Compra verificada" — só marque quando for verdade
+  verified   Boolean   @default(false)
   photoUrl   String?
   videoUrl   String?
   reviewedAt DateTime?

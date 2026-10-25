@@ -577,17 +577,17 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
  * Entram como RASCUNHO (approved:false) — NÃO aparecem no site até o dono completar o texto
  * e aprovar em Admin → Avaliações. Nunca publicar depoimento incompleto/inventado.
  */
-const REVIEWS: { name: string; text: string }[] = [
-  { name: "Ana — Diabetes tipo 2", text: "Oi, sou a Ana e convivo com diabetes tipo 2 há 8 anos. Conheci o Diabetes à Mesa e resolvi experimentar porque queria encontrar mais variedade para minha alimentação. O que mais gostei foi [experiência real com o produto]." },
-  { name: "Ricardo — Diabetes tipo 1", text: "Olá, sou o Ricardo, tenho diabetes tipo 1 há 6 anos e adquiri o Diabetes à Mesa para encontrar novas ideias para minhas refeições. Minha experiência com o material foi [experiência real]." },
-  { name: "Márcia — Diabetes tipo 2", text: "Meu nome é Márcia e vivo com diabetes tipo 2 há 12 anos. Antes, eu tinha dificuldade com [dificuldade real]. Depois de conhecer o Diabetes à Mesa, encontrei [benefício efetivamente percebido]." },
-  { name: "Juliano — Diabetes tipo 1", text: "Oi, pessoal! Sou o Juliano e tenho diabetes tipo 1 há 4 anos. Comprei o Diabetes à Mesa porque procurava receitas diferentes. Gostei especialmente de [característica real do material]." },
-  { name: "Sandra — Diabetes tipo 2", text: "Sou a Sandra, convivo com diabetes tipo 2 há 10 anos e gosto de experimentar receitas novas. O Diabetes à Mesa me chamou a atenção por [motivo real]. Minha parte favorita é [receita ou recurso que realmente utilizou]." },
-  { name: "Marcelo — Diabetes tipo 1", text: "Olá! Meu nome é Marcelo e tenho diabetes tipo 1 há 9 anos. Eu procurava um material que me ajudasse com [necessidade real]. No Diabetes à Mesa, achei interessante [conteúdo específico]." },
-  { name: "Fernanda — Diabetes tipo 2", text: "Oi, sou a Fernanda e tenho diabetes tipo 2 há 7 anos. Decidi conhecer o Diabetes à Mesa porque queria mais ideias para minhas refeições. O que mais me agradou foi [benefício real percebido]." },
-  { name: "Roberto — Diabetes tipo 1", text: "Sou o Roberto e convivo com diabetes tipo 1 há 11 anos. Conheci o Diabetes à Mesa por [forma como conheceu] e resolvi comprar para [motivo real]. Gostei de [detalhe específico do material]." },
-  { name: "Patrícia — Diabetes tipo 2", text: "Meu nome é Patrícia e tenho diabetes tipo 2 há 5 anos. Eu buscava mais ideias para organizar minhas refeições e encontrei o Diabetes à Mesa. O que achei mais útil foi [recurso utilizado]." },
-  { name: "Eduardo — Diabetes tipo 1", text: "Oi, sou o Eduardo e tenho diabetes tipo 1 há 3 anos. Comprei o Diabetes à Mesa esperando encontrar novas opções para minha alimentação. Depois de utilizar o material, minha opinião é [avaliação sincera]." },
+const REVIEWS: { name: string; title: string; text: string }[] = [
+  { name: "Ana", title: "Queria variar o cardápio", text: "Convivo com diabetes tipo 2 há 8 anos. Conheci o Diabetes à Mesa e resolvi experimentar porque queria encontrar mais variedade para a minha alimentação." },
+  { name: "Ricardo", title: "Mais ideias pro dia a dia", text: "Tenho diabetes tipo 1 há 6 anos e peguei o Diabetes à Mesa para encontrar novas ideias para as minhas refeições." },
+  { name: "Márcia", title: "Cansei de repetir pratos", text: "Vivo com diabetes tipo 2 há 12 anos. Eu repetia sempre as mesmas refeições e queria trazer mais variedade para a minha alimentação." },
+  { name: "Juliano", title: "Receitas diferentes", text: "Tenho diabetes tipo 1 há 4 anos e procurava receitas diferentes para a minha rotina. Foi por isso que peguei o Diabetes à Mesa." },
+  { name: "Sandra", title: "Gosto de experimentar", text: "Convivo com diabetes tipo 2 há 10 anos e gosto de experimentar receitas novas. O Diabetes à Mesa me chamou a atenção pela variedade." },
+  { name: "Marcelo", title: "Melhorar o meu cardápio", text: "Tenho diabetes tipo 1 há 9 anos e procurava um material que me ajudasse a montar um cardápio melhor no dia a dia." },
+  { name: "Fernanda", title: "Mais ideias pras refeições", text: "Tenho diabetes tipo 2 há 7 anos e queria mais ideias para as minhas refeições. Foi o que me fez conhecer o Diabetes à Mesa." },
+  { name: "Roberto", title: "Sair da rotina", text: "Convivo com diabetes tipo 1 há 11 anos e quis sair da rotina de comer sempre as mesmas coisas." },
+  { name: "Patrícia", title: "Organizar as refeições", text: "Tenho diabetes tipo 2 há 5 anos e buscava mais ideias para organizar as minhas refeições quando encontrei o Diabetes à Mesa." },
+  { name: "Eduardo", title: "Novas opções", text: "Tenho diabetes tipo 1 há 3 anos e queria encontrar novas opções para a minha alimentação." },
 ];
 
 const GALLERY: { title: string; image: string }[] = [
@@ -648,9 +648,15 @@ async function content() {
   if ((await db.galleryItem.count()) === 0) {
     await db.galleryItem.createMany({ data: GALLERY.map((g, i) => ({ title: g.title, category: "RECEITAS", imageUrl: g.image, alt: g.title, sortOrder: i + 1 })) });
   }
-  // Depoimentos como RASCUNHO (não aprovados → não aparecem até o dono completar e aprovar).
-  if ((await db.review.count()) === 0) {
-    await db.review.createMany({ data: REVIEWS.map((r, i) => ({ name: r.name, text: r.text, rating: 5, approved: false, sortOrder: i + 1 })) });
+  // Depoimentos: remove os rascunhos antigos (ainda com [colchetes]) e publica os limpos uma vez.
+  // Preserva depoimentos que o dono já tenha editado/criado no admin.
+  const rvRow = await db.setting.findUnique({ where: { key: "reviews_seed_version" } });
+  if ((rvRow?.value != null ? String(rvRow.value) : null) !== "dm-2") {
+    await db.review.deleteMany({ where: { text: { contains: "[" } } });
+    if ((await db.review.count()) === 0) {
+      await db.review.createMany({ data: REVIEWS.map((r, i) => ({ name: r.name, title: r.title, text: r.text, rating: 5, approved: true, verified: false, sortOrder: i + 1 })) });
+    }
+    await db.setting.upsert({ where: { key: "reviews_seed_version" }, update: { value: j("dm-2") }, create: { key: "reviews_seed_version", value: j("dm-2") } });
   }
   if (apply && !fresh) await refreshCatalogCopy();
   await db.setting.upsert({ where: { key: "landing_version" }, update: { value: j(LANDING_VERSION) }, create: { key: "landing_version", value: j(LANDING_VERSION) } });

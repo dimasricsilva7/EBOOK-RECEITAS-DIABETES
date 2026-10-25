@@ -18,7 +18,8 @@ export type LandingCtx = {
   planCount: number;
   materials: (PublicMaterial & { plans: string[] })[];
   faqs: { id: string; question: string; answer: string }[];
-  reviews: { id: string; name: string; text: string; photoUrl: string | null }[];
+  reviews: { id: string; name: string; title: string | null; text: string; rating: number; ageLabel: string | null; timeAgo: string | null; verified: boolean; photoUrl: string | null }[];
+  reviewStats: { title: string; rating: string; count: string; countLabel: string; verifiedLabel: string; heroProof: string } | null;
   gallery: { id: string; title: string; imageUrl: string; alt: string }[];
   s: Record<string, string>;
   salesOpen: boolean;
@@ -151,6 +152,12 @@ export function Hero({ section, ctx }: P) {
           <p className="inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-secondary">
             <Icon name="heart" className="h-3.5 w-3.5" /> {eyebrow}
           </p>
+        )}
+        {ctx.reviewStats?.heroProof && (
+          <div className="flex items-center gap-2">
+            <Stars n={5} className="gap-0.5" />
+            <span className="text-sm font-bold text-ink/85">{ctx.reviewStats.heroProof}</span>
+          </div>
         )}
         <h1 className="max-w-[20ch] text-balance font-display text-[2rem] leading-[1.08] text-ink sm:max-w-[22ch] sm:text-[2.9rem] lg:text-[3.2rem]">
           <RichTitle text={section.title ?? ""} />
@@ -641,24 +648,67 @@ export function Facts({ section, ctx }: P) {
 
 // ───────────── Depoimentos (somente reais e aprovados) ─────────────
 
-export function Reviews({ section, ctx }: P) {
-  if (!ctx.reviews.length) return null;
+export function Stars({ n = 5, className = "" }: { n?: number; className?: string }) {
   return (
-    <section className="section">
+    <span className={`inline-flex ${className}`} aria-label={`${n} de 5 estrelas`}>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <svg key={i} viewBox="0 0 20 20" className={`h-4 w-4 ${i < n ? "text-accent" : "text-line"}`} fill="currentColor" aria-hidden="true">
+          <path d="M10 1.6l2.47 5.01 5.53.8-4 3.9.94 5.5L10 14.2l-4.95 2.6.94-5.5-4-3.9 5.53-.8z" />
+        </svg>
+      ))}
+    </span>
+  );
+}
+
+const AVATAR_COLORS = ["bg-primary", "bg-secondary", "bg-[#7C5CFF]", "bg-[#E8734A]", "bg-[#2E9E6B]", "bg-[#C2448A]"];
+const avatarColor = (name: string) => AVATAR_COLORS[[...name].reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length];
+
+/** Avaliações no estilo "prova social" (nota média, estrelas, total e cards). Tudo editável no admin. */
+export function Reviews({ section, ctx }: P) {
+  const stats = ctx.reviewStats;
+  if (!ctx.reviews.length || !stats) return null;
+  const items = ctx.reviews.slice(0, 12);
+  return (
+    <section className="section paper">
       <div className="container-page">
-        <Heading section={section} center />
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
-          {ctx.reviews.slice(0, 6).map((r) => (
-            <figure key={r.id} className="flex flex-col rounded-card border border-line bg-surface p-7">
-              <blockquote className="flex-1 font-display text-lg leading-relaxed text-ink/90">“{r.text}”</blockquote>
-              <figcaption className="mt-5 flex items-center gap-3 text-sm font-semibold text-ink">
-                {r.photoUrl && <img src={r.photoUrl} alt="" className="h-10 w-10 rounded-full object-cover" loading="lazy" />}
-                {r.name}
-              </figcaption>
+        <div className="mx-auto max-w-2xl text-center">
+          {cfgStr(section.config, "eyebrow") && <p className="eyebrow">{cfgStr(section.config, "eyebrow")}</p>}
+          <h2 className="h-section mt-3 text-ink">{stats.title}</h2>
+          {(stats.rating || stats.count) && (
+            <div className="mt-5 flex flex-col items-center gap-1.5">
+              <div className="flex items-center gap-3">
+                {stats.rating && <span className="font-display text-5xl tabular-nums text-ink">{stats.rating}</span>}
+                <Stars n={5} className="gap-0.5 [&_svg]:h-6 [&_svg]:w-6" />
+              </div>
+              {stats.count && <p className="text-sm text-muted">Baseado em {stats.count} {stats.countLabel}</p>}
+            </div>
+          )}
+        </div>
+        <div className="mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible lg:grid-cols-3">
+          {items.map((r) => (
+            <figure key={r.id} className="flex w-[82%] shrink-0 snap-start flex-col rounded-card border border-line bg-surface p-6 shadow-soft sm:w-auto">
+              <div className="flex items-center gap-3">
+                {r.photoUrl ? (
+                  <img src={r.photoUrl} alt="" className="h-11 w-11 rounded-full object-cover" loading="lazy" />
+                ) : (
+                  <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full ${avatarColor(r.name)} font-display text-lg text-white`}>{r.name.trim().charAt(0).toUpperCase()}</span>
+                )}
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-ink">{r.name}{r.ageLabel ? `, ${r.ageLabel}` : ""}</p>
+                  {r.timeAgo && <p className="text-xs text-muted">{r.timeAgo}</p>}
+                </div>
+              </div>
+              <Stars n={r.rating || 5} className="mt-3 gap-0.5" />
+              {r.title && <p className="mt-3 font-bold leading-snug text-ink">{r.title}</p>}
+              <p className="mt-2 flex-1 text-[15px] leading-relaxed text-muted">{r.text}</p>
+              {r.verified && (
+                <p className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-secondary">
+                  <Icon name="check" className="h-4 w-4" /> {stats.verifiedLabel}
+                </p>
+              )}
             </figure>
           ))}
         </div>
-        {section.body && <p className="mt-6 text-center text-xs text-muted">{section.body}</p>}
       </div>
     </section>
   );

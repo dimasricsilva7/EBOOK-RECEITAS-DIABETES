@@ -130,6 +130,16 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   email_checkout_title: "Você pode continuar quando quiser",
   email_checkout_text: "Você começou a finalizar o pedido, mas não chegou a gerar o PIX. Guardamos seus dados para facilitar, sem pressa.",
   email_checkout_button: "Continuar meu pedido",
+  // Prova social / avaliações (TODOS os números devem ser REAIS — não invente)
+  reviews_enabled: "true",
+  reviews_section_title: "Avaliações de clientes",
+  // Nota média e total exibidos. Vazio = calcula pela média real e pelo nº de avaliações cadastradas.
+  reviews_rating: "",
+  reviews_count: "",
+  reviews_count_label: "avaliações verificadas",
+  reviews_verified_label: "Compra verificada",
+  // Linha de prova no topo do hero (ex.: "Mais de 2.000 leitores"). Vazio = não exibe.
+  reviews_hero_proof: "",
   // Quiz e privacidade
   quiz_retention_days: "180",
   quiz_meta_events: "true",

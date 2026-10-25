@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Review" ADD COLUMN "title" TEXT;
+ALTER TABLE "Review" ADD COLUMN "ageLabel" TEXT;
+ALTER TABLE "Review" ADD COLUMN "timeAgo" TEXT;
+ALTER TABLE "Review" ADD COLUMN "verified" BOOLEAN NOT NULL DEFAULT false;

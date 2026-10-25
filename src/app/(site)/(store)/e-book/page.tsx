@@ -53,6 +53,20 @@ export default async function LandingPage() {
 
   const cfg = crediarioConfig(s);
   const lastInstallment = planList.at(-1) && cfg.enabled ? installmentOptions(planList.at(-1)!.priceCents, cfg).at(-1) : null;
+  // Prova social: nota e total vêm do admin; se vazios, calcula pela média/quantidade reais cadastradas.
+  const ratings = reviews.map((r) => r.rating).filter((n) => n > 0);
+  const computedAvg = ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
+  const reviewStats =
+    isOn(s.reviews_enabled ?? "true") && reviews.length
+      ? {
+          title: s.reviews_section_title || "Avaliações de clientes",
+          rating: (s.reviews_rating || "").trim() || (computedAvg ? computedAvg.toFixed(1).replace(".", ",") : ""),
+          count: (s.reviews_count || "").trim() || String(reviews.length),
+          countLabel: s.reviews_count_label || "avaliações",
+          verifiedLabel: s.reviews_verified_label || "Compra verificada",
+          heroProof: (s.reviews_hero_proof || "").trim(),
+        }
+      : null;
   const ctx: LandingCtx = {
     product,
     // Conteúdo do kit = nomes dos produtos inclusos (descreve o bundle mesmo antes de os arquivos ficarem prontos)
@@ -63,7 +77,8 @@ export default async function LandingPage() {
     planCount: planData.length,
     materials,
     faqs: faqs.map((f) => ({ id: f.id, question: f.question, answer: f.answer })),
-    reviews: reviews.map((r) => ({ id: r.id, name: r.name, text: r.text, photoUrl: r.photoUrl })),
+    reviews: reviews.map((r) => ({ id: r.id, name: r.name, title: r.title, text: r.text, rating: r.rating, ageLabel: r.ageLabel, timeAgo: r.timeAgo, verified: r.verified, photoUrl: r.photoUrl })),
+    reviewStats,
     gallery: gallery.map((g) => ({ id: g.id, title: g.title, imageUrl: g.imageUrl, alt: g.alt })),
     s,
     // Vendas abertas = chave ligada no admin + PIX/crediário disponível + material real pronto
