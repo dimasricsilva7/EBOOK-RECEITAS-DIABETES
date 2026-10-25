@@ -523,6 +523,15 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     }),
   },
   {
+    key: "galeria",
+    type: "gallery",
+    label: "Galeria de pratos",
+    sortOrder: 7,
+    title: "Comida de verdade, do seu dia a dia",
+    subtitle: "Pratos simples, bonitos e que cabem na rotina de quem convive com diabetes.",
+    config: j({ eyebrow: "Por dentro das receitas" }),
+  },
+  {
     key: "produto",
     type: "showcase",
     label: "Por dentro do e-book (galeria)",
@@ -651,7 +660,7 @@ const FAQS: [string, string][] = [
 ];
 
 /** Versão do conteúdo da landing. Ao subir uma nova copy, incremente para reaplicar uma vez no deploy. */
-const LANDING_VERSION = "dm-5";
+const LANDING_VERSION = "dm-6";
 
 /** Reaplica a copy comercial do catálogo (nomes/descrições/badges) a partir dos arrays acima. */
 async function refreshCatalogCopy() {

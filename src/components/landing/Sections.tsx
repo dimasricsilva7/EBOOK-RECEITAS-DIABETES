@@ -140,7 +140,7 @@ export function Hero({ section, ctx }: P) {
               alt={cfgStr(section.config, "imageAlt") || ctx.product?.name || ""}
               width={900}
               height={760}
-              className="mx-auto w-[66%] max-w-[260px] object-contain drop-shadow-2xl sm:w-full sm:max-w-[440px]"
+              className="mx-auto w-[66%] max-w-[260px] animate-float object-contain drop-shadow-2xl will-change-transform sm:w-full sm:max-w-[440px]"
               fetchPriority="high"
             />
           ) : (
