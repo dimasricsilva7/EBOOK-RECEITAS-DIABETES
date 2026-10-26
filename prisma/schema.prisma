@@ -811,6 +811,21 @@ model Review {
   updatedAt  DateTime  @updatedAt
 }
 
+/// Notificação de compra (balão de prova social). O admin cadastra; compras REAIS pagas também aparecem.
+model PurchaseNotice {
+  id        String   @id @default(cuid())
+  name      String
+  product   String
+  /// Tempo exibido (ex.: "há 2 horas"). Vazio = "há pouco".
+  timeLabel String?
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, sortOrder])
+}
+
 model Setting {
   key       String   @id
   value     Json

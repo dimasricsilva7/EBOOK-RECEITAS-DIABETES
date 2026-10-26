@@ -143,6 +143,8 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   // Balões de compras REAIS recentes no checkout (só pedidos pagos; nunca inventa compras)
   recent_purchases_enabled: "true",
   // Quiz e privacidade
+  // Perguntas do quiz (/quiz). Vazio = usa as perguntas padrão. Formato: pergunta + opções com "- ".
+  quiz_questions_text: "",
   quiz_retention_days: "180",
   quiz_meta_events: "true",
   // Rastreamento

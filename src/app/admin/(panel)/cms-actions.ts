@@ -275,3 +275,38 @@ export async function deleteReview(_: ActionResult, fd: FormData): Promise<Actio
     return { ok: true, message: "Removida." };
   });
 }
+
+// ───────────── Notificações de compra (balões) ─────────────
+
+export async function savePurchaseNotice(_: ActionResult, fd: FormData): Promise<ActionResult> {
+  return withAdmin("EDITOR", async (admin) => {
+    const id = optStr(fd, "id", 40);
+    const data = {
+      name: str(fd, "name", 60),
+      product: str(fd, "product", 80),
+      timeLabel: optStr(fd, "timeLabel", 40),
+      active: bool(fd, "active"),
+      sortOrder: int(fd, "sortOrder", 0),
+    };
+    if (!data.name || !data.product) return { error: "Informe o nome e o produto." };
+    if (data.active && !bool(fd, "confirmReal")) return { error: "Confirme que é uma compra real antes de exibir (notificação falsa pode derrubar sua conta na Meta)." };
+    if (id) {
+      await db.purchaseNotice.update({ where: { id }, data });
+      await audit(admin.id, "purchase_notice_updated", "purchaseNotice", id, { summary: `Notificação: ${data.name} — ${data.product}` });
+    } else {
+      const created = await db.purchaseNotice.create({ data });
+      await audit(admin.id, "purchase_notice_created", "purchaseNotice", created.id, { summary: `Notificação criada: ${data.name} — ${data.product}` });
+    }
+    revalidatePath("/admin/notificacoes");
+    return { ok: true, message: "Salvo." };
+  });
+}
+
+export async function deletePurchaseNotice(_: ActionResult, fd: FormData): Promise<ActionResult> {
+  return withAdmin("EDITOR", async (admin) => {
+    const n = await db.purchaseNotice.delete({ where: { id: str(fd, "id", 40) } });
+    await audit(admin.id, "purchase_notice_deleted", "purchaseNotice", n.id, { summary: `Notificação removida: ${n.name}` });
+    revalidatePath("/admin/notificacoes");
+    return { ok: true, message: "Removida." };
+  });
+}

@@ -30,8 +30,8 @@ const GROUPS: { title: string; items: { href: string; label: string; owner?: boo
     title: "Leads e Quiz",
     items: [
       { href: "/admin/quiz-leads", label: "Leads do quiz" },
+      { href: "/admin/quiz-perguntas", label: "Perguntas do quiz" },
       { href: "/admin/leads", label: "Leads e Quiz (antigo)" },
-      { href: "/admin/quiz", label: "Editor do Quiz" },
     ],
   },
   {
@@ -61,6 +61,7 @@ const GROUPS: { title: string; items: { href: string; label: string; owner?: boo
       { href: "/admin/galeria", label: "Galeria" },
       { href: "/admin/faq", label: "FAQ" },
       { href: "/admin/avaliacoes", label: "Avaliações" },
+      { href: "/admin/notificacoes", label: "Notificações de compra" },
     ],
   },
   {

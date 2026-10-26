@@ -34,7 +34,7 @@ export async function saveSettings(_: ActionResult, fd: FormData): Promise<Actio
     const current = Object.fromEntries((await db.setting.findMany({ where: { key: { in: keys } } })).map((r) => [r.key, String(r.value)]));
     const changes: { key: string; before: string; after: string }[] = [];
     for (const key of keys) {
-      let value = BOOL_KEYS.includes(key) ? String(bool(fd, key)) : str(fd, key, key.startsWith("policy_") ? 30_000 : 2000);
+      let value = BOOL_KEYS.includes(key) ? String(bool(fd, key)) : str(fd, key, key.startsWith("policy_") || key === "quiz_questions_text" ? 30_000 : 2000);
       if (key === "ga_id") value = value.toUpperCase();
       if (key.startsWith("theme_") && value && !value.startsWith("#")) value = `#${value}`;
       if (URL_KEYS.includes(key) && value && !/^(https:\/\/|\/)/.test(value)) return { error: `URL inválida em ${key} (use https://).` };

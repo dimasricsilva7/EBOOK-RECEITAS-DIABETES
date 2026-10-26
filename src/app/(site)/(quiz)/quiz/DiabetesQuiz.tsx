@@ -3,44 +3,20 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { metaEvent, track } from "@/lib/client/tracking";
+import { DEFAULT_QUESTIONS, type QuizQ } from "@/lib/quiz-config";
 
-/** Quiz de captação (client-side). Fluxo: intro → 5 perguntas → loader → e-mail → resultado + oferta. */
+/** Quiz de captação (client-side). Perguntas editáveis no admin. Fluxo: intro → perguntas → loader → e-mail → resultado. */
 
-const QUESTIONS: { q: string; options: string[] }[] = [
-  { q: "Você convive com qual tipo de diabetes?", options: ["Tipo 2", "Tipo 1", "Pré-diabetes", "Ainda não sei / é pra outra pessoa"] },
-  { q: "Você é:", options: ["Mulher", "Homem", "Prefiro não dizer"] },
-  { q: "Qual a sua faixa de idade?", options: ["Até 29 anos", "30 a 44 anos", "45 a 59 anos", "60 anos ou mais"] },
-  { q: "Há quanto tempo isso faz parte da sua vida?", options: ["Acabei de descobrir", "Menos de 1 ano", "De 1 a 5 anos", "Mais de 5 anos"] },
-  {
-    q: "Qual é a sua MAIOR dificuldade hoje?",
-    options: ["Não saber o que cozinhar que não suba a glicose", "Enjoar de comer sempre a mesma coisa", "Sentir falta de doce", "Cozinhar pra família e pra mim ao mesmo tempo"],
-  },
-  { q: "Você já tentou cortar alimentos ou fazer dieta e não conseguiu manter?", options: ["Sim, várias vezes", "Sim, uma vez ou outra", "Consigo manter, mas é um sofrimento", "Nunca tentei de verdade"] },
-  { q: "O que você mais EVITA comer com medo da glicemia subir?", options: ["Doces e sobremesas", "Pães, bolos e massas", "Frutas", "Sinceramente, não sei direito o que evitar"] },
-  { q: "E o que você mais SENTE FALTA de comer?", options: ["Doce", "Pão, bolo e massa", "Um lanche prático", "Um pouco de tudo"] },
-  { q: "O que você mais quer conquistar agora?", options: ["Variar as refeições sem medo", "Comer doce sem culpa", "Facilitar a minha rotina na cozinha", "Ajudar no controle da glicemia"] },
-  { q: "Quem come as suas refeições?", options: ["Só eu", "Eu e meu/minha companheiro(a)", "A família toda", "Cozinho pra outra pessoa com diabetes"] },
-  { q: "Se existisse um material com mais de 250 receitas liberadas e fáceis de fazer, você…", options: ["Começaria hoje mesmo", "Com certeza ia querer conhecer", "Toparia, dependendo do preço", "Ia pensar com calma"] },
-];
-
-// A tela de resultado varia conforme a MAIOR dificuldade (índice 4).
-const DIFFICULTY_Q = 4;
-function resultTitle(d: number | null): string {
-  if (d === 0) return "O seu problema não é força de vontade. É cardápio.";
-  if (d === 1) return "Dá pra variar o prato todo dia sem sair do controle. Só falta o roteiro.";
-  if (d === 2) return "Boa notícia: você não precisa cortar o doce. Precisa do doce certo.";
-  if (d === 3) return "Dá pra cuidar da sua diabetes e alimentar a família na mesma panela.";
-  return "O seu problema não é força de vontade. É cardápio.";
-}
-
+const RESULT_TITLE = "O seu problema não é força de vontade. É cardápio.";
 const emailOk = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 
 type Screen = "intro" | number | "loading" | "email" | "result";
 
-export function DiabetesQuiz() {
+export function DiabetesQuiz({ questions }: { questions?: QuizQ[] }) {
+  const QUESTIONS = questions && questions.length ? questions : DEFAULT_QUESTIONS;
   const router = useRouter();
   const [screen, setScreen] = useState<Screen>("intro");
-  const [answers, setAnswers] = useState<(number | null)[]>(Array(QUESTIONS.length).fill(null));
+  const [answers, setAnswers] = useState<(number | null)[]>(() => Array(QUESTIONS.length).fill(null));
   const [email, setEmail] = useState("");
   const [emailErr, setEmailErr] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -166,7 +142,7 @@ export function DiabetesQuiz() {
     return (
       <div className={wrap}>
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">O seu resultado</p>
-        <h2 className="mt-4 font-display text-[1.8rem] leading-tight text-ink sm:text-4xl">{resultTitle(answers[DIFFICULTY_Q])}</h2>
+        <h2 className="mt-4 font-display text-[1.8rem] leading-tight text-ink sm:text-4xl">{RESULT_TITLE}</h2>
         <div className="mx-auto mt-6 max-w-lg space-y-4 text-left text-[1.0625rem] leading-relaxed text-ink/80">
           <p>Olha, quase todo mundo que responde esse quiz cai na mesma armadilha: depois do diagnóstico, cortou tudo, ficou no arroz com frango e numa semana já tava de saco cheio. Aí relaxa, come um pão de queijo, o aparelho aponta 170 e vem a culpa.</p>
           <p>O problema nunca foi você. É que te falaram o que <strong>não</strong> comer e ninguém te deu o cardápio do que <strong>pode</strong>.</p>

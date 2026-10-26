@@ -2,23 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-type Purchase = { name: string; product: string; at: string | null };
-
-function timeAgo(at: string | null): string {
-  if (!at) return "há pouco";
-  const diff = Date.now() - new Date(at).getTime();
-  const min = Math.floor(diff / 60000);
-  if (min < 1) return "agora mesmo";
-  if (min < 60) return `há ${min} min`;
-  const h = Math.floor(min / 60);
-  if (h < 24) return `há ${h} h`;
-  const d = Math.floor(h / 24);
-  return `há ${d} dia${d > 1 ? "s" : ""}`;
-}
+type Purchase = { name: string; product: string; when: string };
 
 /**
- * Balões de compras REAIS recentes (apenas pedidos pagos). Um a cada ~10s.
- * Nunca inventa compras: se não houver vendas reais, não aparece nada.
+ * Balões de compra (prova social). Mostra compras reais pagas + notificações cadastradas
+ * no admin. Um a cada ~10s. Se a lista estiver vazia, não aparece nada.
  */
 export function RecentPurchases() {
   const [list, setList] = useState<Purchase[]>([]);
@@ -62,7 +50,7 @@ export function RecentPurchases() {
         </span>
         <div className="min-w-0 text-sm">
           <p className="truncate text-ink"><span className="font-bold">{p.name}</span> comprou o <span className="font-semibold">{p.product}</span></p>
-          <p className="text-xs text-muted">{timeAgo(p.at)} · compra verificada</p>
+          <p className="text-xs text-muted">{p.when} · compra verificada</p>
         </div>
       </div>
     </div>

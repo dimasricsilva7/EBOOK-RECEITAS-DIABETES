@@ -3,6 +3,7 @@ import { Fragment } from "react";
 import { Audience, Author, Compare, Content, Cycle, Facts, Experience, Faq, FinalCta, GallerySection, Hero, Identification, Limits, Method, Offer, Patterns, Reviews, Showcase, Stats, Topics, Trust, Video, type LandingCtx } from "@/components/landing/Sections";
 import { cfgStr } from "@/server/landing";
 import { LandingTracker, QuizWelcome, StickyMobileCTA } from "@/components/landing/client";
+import { RecentPurchases } from "@/components/RecentPurchases";
 import { valueFor } from "@/lib/experiments";
 import { crediarioConfig, installmentOptions } from "@/lib/crediario";
 import { bravopayMode, siteUrl } from "@/lib/env";
@@ -146,6 +147,7 @@ export default async function LandingPage() {
       })}
       <LandingTracker product={product ? { id: product.id, sku: product.sku, name: product.name, priceCents: product.priceCents } : null} />
       {isOn(s.sticky_cta_enabled) && product && <StickyMobileCTA label={s.sticky_cta_label || "Quero as receitas"} price={formatBRL(Math.min(...planList.map((x) => x.priceCents)))} />}
+      {isOn(s.recent_purchases_enabled ?? "true") && <RecentPurchases />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
     </div>
   );
