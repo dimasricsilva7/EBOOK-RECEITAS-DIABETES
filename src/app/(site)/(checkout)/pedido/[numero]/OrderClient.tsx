@@ -296,22 +296,25 @@ export function OrderClient({ initial, token, qrSvg, upsell, whatsappUrl, credia
             )}
           </div>
           <div className="p-6">
-            <button onClick={copy} data-cta="pix_copy" className={`btn w-full ${copied ? "bg-success text-white" : "btn-primary"}`}>
-              <Icon name={copied ? "check" : "pix"} className="h-5 w-5" /> {copied ? "Código copiado — agora pague no app do banco" : "Copiar código PIX"}
-            </button>
-            <label htmlFor="pix-code" className="sr-only">Código PIX copia e cola</label>
-            <textarea id="pix-code" readOnly value={order.pixCopyPaste} rows={3} className="mt-3 w-full resize-none rounded-2xl border border-line bg-bg p-3 font-mono text-xs text-muted" onFocus={(e) => e.currentTarget.select()} />
-            <ol className="mt-4 space-y-2 text-sm text-ink/80">
-              {["Copie o código acima ou escaneie o QR Code", "No app do banco, escolha PIX copia e cola", "Confirme — a liberação aqui é automática"].map((t, i) => (
-                <li key={t} className="flex items-center gap-3"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-sand font-display text-sm text-primary">{i + 1}</span>{t}</li>
-              ))}
-            </ol>
             {qrSvg && (
-              <div className="mt-5 text-center">
-                <p className="text-sm font-semibold text-secondary">Ou escaneie o QR Code no app do banco</p>
+              <div className="text-center">
+                <p className="text-sm font-semibold text-secondary">Escaneie o QR Code no app do banco</p>
                 <div className="mx-auto mt-3 w-52 rounded-2xl border border-line bg-white p-3 [&_svg]:h-auto [&_svg]:w-full" role="img" aria-label="QR Code do PIX" dangerouslySetInnerHTML={{ __html: qrSvg }} />
               </div>
             )}
+            <div className={qrSvg ? "mt-6 border-t border-line pt-6" : ""}>
+              <p className="mb-3 text-center text-sm font-semibold text-secondary">{qrSvg ? "Ou use o PIX copia e cola" : "PIX copia e cola"}</p>
+              <button onClick={copy} data-cta="pix_copy" className={`btn w-full ${copied ? "bg-success text-white" : "btn-primary"}`}>
+                <Icon name={copied ? "check" : "pix"} className="h-5 w-5" /> {copied ? "Código copiado — agora pague no app do banco" : "Copiar código PIX"}
+              </button>
+              <label htmlFor="pix-code" className="sr-only">Código PIX copia e cola</label>
+              <textarea id="pix-code" readOnly value={order.pixCopyPaste} rows={3} className="mt-3 w-full resize-none rounded-2xl border border-line bg-bg p-3 font-mono text-xs text-muted" onFocus={(e) => e.currentTarget.select()} />
+            </div>
+            <ol className="mt-5 space-y-2 text-sm text-ink/80">
+              {["Escaneie o QR Code ou copie o código acima", "No app do banco, escolha PIX copia e cola", "Confirme — a liberação aqui é automática"].map((t, i) => (
+                <li key={t} className="flex items-center gap-3"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-sand font-display text-sm text-primary">{i + 1}</span>{t}</li>
+              ))}
+            </ol>
             <div className="mt-5 flex items-center justify-center gap-2 text-sm text-muted" aria-live="polite">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
