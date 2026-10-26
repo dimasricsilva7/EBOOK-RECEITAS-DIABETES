@@ -122,3 +122,14 @@ const deliverable = { status: "READY" as const, OR: [{ source: "link", externalU
 export async function readyMaterialCount(productId: string) {
   return db.digitalMaterial.count({ where: { productId: { in: await materialProductIds(productId) }, ...deliverable } });
 }
+
+/**
+ * Versão cacheada do contador (tag "catalog", revalida em 5min) para uso na LANDING,
+ * onde só precisamos saber se há algo entregável. O checkout continua usando a versão
+ * fresca acima, para não vender um item recém-marcado como indisponível.
+ */
+export const readyMaterialCountCached = unstable_cache(
+  (productId: string) => readyMaterialCount(productId),
+  ["ready-material-count-v1"],
+  { tags: ["catalog"], revalidate: 300 }
+);

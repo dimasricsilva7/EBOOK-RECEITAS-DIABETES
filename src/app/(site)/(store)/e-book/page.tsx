@@ -8,7 +8,7 @@ import { valueFor } from "@/lib/experiments";
 import { crediarioConfig, installmentOptions } from "@/lib/crediario";
 import { bravopayMode, siteUrl } from "@/lib/env";
 import { db } from "@/lib/db";
-import { currentAssignments, getLandingMaterials, getPlans, getPublicCatalog, readyMaterialCount } from "@/server/catalog";
+import { currentAssignments, getLandingMaterials, getPlans, getPublicCatalog, readyMaterialCountCached } from "@/server/catalog";
 import { getApprovedReviews, getFaqs, getGallery, getLandingSections, loadLandingSectionsDirect, safeLoad, type SectionData } from "@/server/landing";
 import { getPublishedQuiz } from "@/server/quiz";
 import { getSettings, isOn } from "@/server/settings";
@@ -44,7 +44,7 @@ export default async function LandingPage() {
   const product = planList[0] ?? null;
   const fullCatalog = await getPublicCatalog(assignments).catch(() => []);
   const nameById = new Map(fullCatalog.map((p) => [p.id, p.name]));
-  const planData = await Promise.all(planList.map(async (pl) => ({ product: pl, materials: await getLandingMaterials(pl.id).catch(() => []), ready: await readyMaterialCount(pl.id).catch(() => 0) })));
+  const planData = await Promise.all(planList.map(async (pl) => ({ product: pl, materials: await getLandingMaterials(pl.id).catch(() => []), ready: await readyMaterialCountCached(pl.id).catch(() => 0) })));
   const readyCount = planData.reduce((s, x) => s + x.ready, 0);
   // Conteúdo incluído: união dos materiais de todos os planos, indicando em quais planos cada um está
   const materials = [...new Map(planData.flatMap((x) => x.materials.map((m) => [m.id, m] as const))).values()].map((m) => ({
