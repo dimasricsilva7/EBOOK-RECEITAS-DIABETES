@@ -395,7 +395,7 @@ export function CheckoutClient({
           <ReservationBar minutes={reservationMinutes} />
         </div>
       )}
-      <form onSubmit={submit} noValidate className="container-page grid gap-6 pb-16 pt-6 sm:pt-10 lg:grid-cols-[1fr_400px] lg:items-start lg:gap-12">
+      <form onSubmit={submit} noValidate className="container-page grid gap-6 pb-28 pt-6 sm:pt-10 lg:grid-cols-[1fr_400px] lg:items-start lg:gap-12 lg:pb-16">
         {/* campo isca: fora da tela, sem foco nem preenchimento automático — só robôs preenchem */}
         <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", top: "auto", width: 1, height: 1, overflow: "hidden" }}>
           <label htmlFor="adf-website">Site</label>
@@ -579,12 +579,7 @@ export function CheckoutClient({
 
           {formError && <p className="rounded-2xl bg-danger/10 px-4 py-3 font-semibold text-danger" role="alert">{formError}</p>}
 
-          <div className="lg:hidden">
-            <button type="submit" disabled={submitting || cart.loading || availableMethods.length === 0} data-cta="checkout_submit" className="btn-primary w-full">
-              {submitLabel}{!submitting && ` · ${formatBRL(q.totalCents)}`}
-            </button>
-            {legal}
-          </div>
+          <div className="lg:hidden">{legal}</div>
           <TrustSeals cnpj={cnpj} companyName={companyName} securityText={securityText} />
         </div>
 
@@ -600,6 +595,13 @@ export function CheckoutClient({
             {legal}
           </div>
         </aside>
+
+        {/* Botão fixo que acompanha o scroll (celular) */}
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-6px_24px_rgba(0,0,0,0.1)] backdrop-blur lg:hidden">
+          <button type="submit" disabled={submitting || cart.loading || availableMethods.length === 0} data-cta="checkout_submit" className="btn-primary w-full">
+            {submitLabel}{!submitting && ` · ${formatBRL(q.totalCents)}`}
+          </button>
+        </div>
       </form>
     </>
   );
