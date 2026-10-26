@@ -43,7 +43,7 @@ export function RecentPurchases() {
   const p = list[idx];
   if (!p) return null;
   return (
-    <div className={`fixed bottom-4 left-4 right-4 z-40 transition-all duration-500 sm:right-auto sm:max-w-sm ${show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"}`} aria-live="polite">
+    <div className={`fixed bottom-24 left-4 right-4 z-50 transition-all duration-500 sm:right-auto sm:max-w-sm lg:bottom-4 ${show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"}`} aria-live="polite">
       <div className="flex items-start gap-3 rounded-2xl border border-line bg-surface px-4 py-3 shadow-lift">
         <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 13l4 4L19 7" /></svg>
