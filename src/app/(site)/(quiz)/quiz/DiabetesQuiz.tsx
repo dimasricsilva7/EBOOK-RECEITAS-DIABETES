@@ -15,9 +15,12 @@ const QUESTIONS: { q: string; options: string[] }[] = [
     q: "Qual é a sua MAIOR dificuldade hoje?",
     options: ["Não saber o que cozinhar que não suba a glicose", "Enjoar de comer sempre a mesma coisa", "Sentir falta de doce", "Cozinhar pra família e pra mim ao mesmo tempo"],
   },
+  { q: "Você já tentou cortar alimentos ou fazer dieta e não conseguiu manter?", options: ["Sim, várias vezes", "Sim, uma vez ou outra", "Consigo manter, mas é um sofrimento", "Nunca tentei de verdade"] },
   { q: "O que você mais EVITA comer com medo da glicemia subir?", options: ["Doces e sobremesas", "Pães, bolos e massas", "Frutas", "Sinceramente, não sei direito o que evitar"] },
   { q: "E o que você mais SENTE FALTA de comer?", options: ["Doce", "Pão, bolo e massa", "Um lanche prático", "Um pouco de tudo"] },
+  { q: "O que você mais quer conquistar agora?", options: ["Variar as refeições sem medo", "Comer doce sem culpa", "Facilitar a minha rotina na cozinha", "Ajudar no controle da glicemia"] },
   { q: "Quem come as suas refeições?", options: ["Só eu", "Eu e meu/minha companheiro(a)", "A família toda", "Cozinho pra outra pessoa com diabetes"] },
+  { q: "Se existisse um material com mais de 250 receitas liberadas e fáceis de fazer, você…", options: ["Começaria hoje mesmo", "Com certeza ia querer conhecer", "Toparia, dependendo do preço", "Ia pensar com calma"] },
 ];
 
 // A tela de resultado varia conforme a MAIOR dificuldade (índice 4).
@@ -93,7 +96,7 @@ export function DiabetesQuiz() {
       <div className={wrap}>
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Diabetes à Mesa</p>
         <h1 className="mt-5 font-display text-[1.9rem] leading-tight text-ink sm:text-4xl">
-          Responda 5 perguntas rápidas e veja como comer o que você gosta <em className="text-primary not-italic underline decoration-accent decoration-2 underline-offset-4">sem o aparelhinho apitar alto</em>.
+          Responda {QUESTIONS.length} perguntas rápidas e veja como comer o que você gosta <em className="text-primary not-italic underline decoration-accent decoration-2 underline-offset-4">sem o aparelhinho apitar alto</em>.
         </h1>
         <p className="mt-5 text-lg leading-relaxed text-ink/75">Leva menos de 1 minuto. No fim, você recebe um guia gratuito com 3 sobremesas que não disparam a glicemia.</p>
         <button onClick={() => setScreen(0)} className="btn-primary mx-auto mt-8 w-full max-w-sm text-base">Começar</button>

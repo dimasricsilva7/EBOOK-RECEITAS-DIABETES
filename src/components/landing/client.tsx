@@ -114,7 +114,7 @@ export function ScrollCta({ label, target = "#oferta", className = "btn-primary"
 }
 
 /** CTA fixo no celular: aparece depois da primeira dobra e some sobre a oferta e o rodapé. */
-export function StickyMobileCTA({ label }: { label: string }) {
+export function StickyMobileCTA({ label, price }: { label: string; price?: string | null }) {
   const [show, setShow] = useState(false);
   const [blocked, setBlocked] = useState(false);
   useEffect(() => {
@@ -136,8 +136,9 @@ export function StickyMobileCTA({ label }: { label: string }) {
   if (!show || blocked) return null;
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 animate-slideup border-t border-line bg-bg/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:hidden">
-      <a href="#oferta" data-cta="sticky_mobile_cta" className="btn-primary w-full">
-        {label}
+      <a href="#oferta" data-cta="sticky_mobile_cta" className="btn-primary flex w-full items-center justify-center gap-2 whitespace-nowrap px-3 text-[15px]">
+        <span className="min-w-0 truncate">{label}</span>
+        {price && <span className="shrink-0 rounded-full bg-white/20 px-2.5 py-0.5 text-sm font-bold tabular-nums">{price}</span>}
       </a>
     </div>
   );

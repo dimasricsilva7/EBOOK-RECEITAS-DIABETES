@@ -494,8 +494,10 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     title: "Sim, você pode comer doce tendo diabetes.",
     subtitle: "A questão nunca foi parar de comer doce. Foi aprender a fazer o doce certo.",
     body: "São doces de verdade, feitos para quem precisa controlar o açúcar no sangue — sem aquele gosto de adoçante e sem receita impossível.",
+    imageUrl: "/img/sobremesas.png",
     config: j({
       eyebrow: "A parte que você mais vai gostar",
+      imageAlt: "Sobremesa saudável sem açúcar para quem tem diabetes",
       items: [
         { icon: "heart", title: "Sobremesas que não disparam a glicemia", text: "Bolos, mousses e docinhos pensados para o seu controle glicêmico." },
         { icon: "leaf", title: "Trocas inteligentes de ingredientes", text: "O que usar no lugar do açúcar e da farinha branca sem perder o sabor." },
@@ -559,6 +561,29 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
       "Oi, eu sou [SEU NOME]. [Eu / minha mãe / meu pai] convive com diabetes tipo 2 há [X] anos. Lembro do dia do diagnóstico: a médica listou tudo que tinha que sair do prato e foi embora — ninguém disse o que PODIA entrar. Durante meses foi arroz, frango e cara feia, até eu começar a testar troca por troca o que mantinha o sabor sem subir a glicemia. As receitas que deram certo viraram esse e-book. Sem fórmula mágica, sem promessa de cura — só comida boa que não te sabota.",
     // confirmed:"false" mantém a seção OCULTA até o dono subir a foto e confirmar a autoria no admin.
     config: j({ eyebrow: "Quem fez isso", name: "[SEU NOME]", role: "", confirmed: "false", imageAlt: "Foto do autor" }),
+  },
+  {
+    key: "para-quem",
+    type: "audience",
+    label: "Pra quem é",
+    sortOrder: 9,
+    title: "O Diabetes à Mesa é pra você?",
+    config: j({
+      eyebrow: "Pra quem é",
+      forYouTitle: "É pra você se…",
+      forYou: [
+        "Você tem diabetes (tipo 1, tipo 2 ou pré) e quer variar o cardápio",
+        "Está cansado(a) de comer sempre a mesma coisa",
+        "Sente falta de doce e quer opções seguras",
+        "Quer praticidade: receitas fáceis e ingredientes de mercado",
+      ],
+      notForYouTitle: "Talvez não seja se…",
+      notForYou: [
+        "Você procura dieta milagrosa ou promessa de cura",
+        "Não quer cozinhar nem o básico",
+        "Espera substituir o acompanhamento do seu médico",
+      ],
+    }),
   },
   {
     key: "prova-social",
@@ -660,7 +685,7 @@ const FAQS: [string, string][] = [
 ];
 
 /** Versão do conteúdo da landing. Ao subir uma nova copy, incremente para reaplicar uma vez no deploy. */
-const LANDING_VERSION = "dm-6";
+const LANDING_VERSION = "dm-7";
 
 /** Reaplica a copy comercial do catálogo (nomes/descrições/badges) a partir dos arrays acima. */
 async function refreshCatalogCopy() {

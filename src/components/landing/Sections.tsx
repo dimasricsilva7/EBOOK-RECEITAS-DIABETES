@@ -282,8 +282,16 @@ export function Method({ section }: P) {
     <section className="section bg-ink text-bg">
       <div className="container-page">
         <Heading section={section} light />
+        {section.imageUrl && (
+          <img
+            src={section.imageUrl}
+            alt={cfgStr(section.config, "imageAlt") || ""}
+            className="mx-auto mt-10 aspect-[16/10] w-full max-w-lg rounded-card object-cover shadow-lift"
+            loading="lazy"
+          />
+        )}
         {items.length > 0 && (
-          <div className="mt-12 grid gap-px overflow-hidden rounded-card bg-bg/10 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-px overflow-hidden rounded-card bg-bg/10 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((it, i) => (
               <Reveal key={i} delay={i * 60} className="h-full">
                 <div className="h-full bg-ink p-7 sm:p-8">

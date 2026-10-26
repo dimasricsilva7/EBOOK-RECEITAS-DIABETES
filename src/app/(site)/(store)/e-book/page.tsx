@@ -145,7 +145,7 @@ export default async function LandingPage() {
         );
       })}
       <LandingTracker product={product ? { id: product.id, sku: product.sku, name: product.name, priceCents: product.priceCents } : null} />
-      {isOn(s.sticky_cta_enabled) && product && <StickyMobileCTA label={`${s.sticky_cta_label || "Quero conhecer"} · ${planList.length > 1 ? "a partir de " : ""}${formatBRL(Math.min(...planList.map((x) => x.priceCents)))}`} />}
+      {isOn(s.sticky_cta_enabled) && product && <StickyMobileCTA label={s.sticky_cta_label || "Quero as receitas"} price={formatBRL(Math.min(...planList.map((x) => x.priceCents)))} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
     </div>
   );

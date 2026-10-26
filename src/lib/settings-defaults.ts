@@ -39,7 +39,7 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   header_cta_label: "Quero as receitas",
   sticky_cta_enabled: "true",
   landing_animations: "true",
-  sticky_cta_label: "Quero o Diabetes à Mesa",
+  sticky_cta_label: "Quero as receitas",
   footer_text: "Conteúdo educativo de culinária. Não substitui acompanhamento médico ou nutricional e não trata nem cura diabetes.",
   // Vendas — desligadas até haver material real pronto (o checkout também exige material READY)
   sales_enabled: "false",
