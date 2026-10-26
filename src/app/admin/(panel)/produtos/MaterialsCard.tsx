@@ -41,6 +41,11 @@ function MaterialForm({ productId, m }: { productId: string; m?: DigitalMaterial
       <label className="flex items-center gap-2 text-sm font-medium sm:col-span-2">
         <input type="checkbox" name="showOnLanding" defaultChecked={m?.showOnLanding ?? true} className="h-4 w-4" /> Mostrar na seção &quot;Conteúdo incluído&quot; da landing (quando pronto)
       </label>
+      {!m && (
+        <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 sm:col-span-2">
+          <b>Como enviar o PDF:</b> clique em <b>Adicionar material</b> (pode deixar o status em “Em produção”). O material aparece na lista acima com o botão <b>Enviar arquivo</b> — envie o PDF por lá e depois clique em <b>Marcar como pronto</b>.
+        </p>
+      )}
       <div className="sm:col-span-2"><SubmitButton>{m ? "Salvar material" : "Adicionar material"}</SubmitButton></div>
     </ActionForm>
   );

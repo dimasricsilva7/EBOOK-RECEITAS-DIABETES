@@ -20,7 +20,7 @@ export async function saveMaterial(_: ActionResult, fd: FormData): Promise<Actio
     if (title.length < 2) return { error: "Informe o título do material." };
     if (!(await db.product.findUnique({ where: { id: productId }, select: { id: true } }))) return { error: "Produto inválido." };
     const format = (FORMATS.includes(str(fd, "format", 12) as MaterialFormat) ? str(fd, "format", 12) : "PDF") as MaterialFormat;
-    const status = (STATUSES.includes(str(fd, "status", 12) as MaterialStatus) ? str(fd, "status", 12) : "PENDING") as MaterialStatus;
+    let status = (STATUSES.includes(str(fd, "status", 12) as MaterialStatus) ? str(fd, "status", 12) : "PENDING") as MaterialStatus;
     const source = str(fd, "source", 8) === "link" ? "link" : "file";
     const externalUrl = httpsUrl(optStr(fd, "externalUrl", 1000));
     if (source === "link" && optStr(fd, "externalUrl", 1000) && !externalUrl) return { error: "O link do material precisa começar com https://" };
@@ -39,9 +39,10 @@ export async function saveMaterial(_: ActionResult, fd: FormData): Promise<Actio
     };
     const existing = id ? await db.digitalMaterial.findUniqueOrThrow({ where: { id } }) : null;
     const deliverable = source === "link" ? Boolean(externalUrl) : Boolean(existing?.uploadId);
-    if (status === "READY" && !deliverable) {
-      return { error: source === "link" ? "Para marcar como pronto, informe o link https do material." : "Para marcar como pronto, salve e envie o arquivo primeiro (o status pode ser alterado depois do upload)." };
-    }
+    // Nunca bloqueia o cadastro: se pediu "Pronto" sem conteúdo ainda, salva como "Em produção"
+    // e orienta a enviar o arquivo (ou informar o link). O material sempre é criado.
+    const downgraded = status === "READY" && !deliverable;
+    if (downgraded) status = "PENDING";
     if (existing) {
       const after = await db.digitalMaterial.update({ where: { id: existing.id }, data: { ...data, status } });
       await audit(admin.id, "material_updated", "material", existing.id, { summary: `Material "${after.title}" atualizado`, before: existing as unknown as Record<string, unknown>, after: after as unknown as Record<string, unknown> });
@@ -52,7 +53,9 @@ export async function saveMaterial(_: ActionResult, fd: FormData): Promise<Actio
     }
     refreshStore("catalog", "landing");
     revalidatePath(`/admin/produtos/${productId}`);
-    return { ok: true, message: existing ? "Material salvo." : "Material criado. Se for arquivo, envie-o na lista abaixo." };
+    const uploadHint = source === "link" ? "Informe o link https do material e clique em “Marcar como pronto”." : "Agora envie o arquivo (botão “Enviar arquivo” na lista acima) e clique em “Marcar como pronto”.";
+    if (downgraded) return { ok: true, message: `Material salvo como “Em produção”. ${uploadHint}` };
+    return { ok: true, message: existing ? "Material salvo." : `Material criado. ${source === "file" ? "Envie o arquivo na lista acima." : "Informe o link do material."}` };
   });
 }
 
