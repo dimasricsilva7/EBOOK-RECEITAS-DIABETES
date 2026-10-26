@@ -305,10 +305,37 @@ const BUMP_ONLY_PRODUCTS: Comp[] = [
     shortDescription: "Vídeo-aulas mostrando o passo a passo de preparo das receitas do livro.",
     material: { title: "Vídeo-aulas de Preparo", description: "Aulas em vídeo do preparo das receitas do e-book.", howToUse: "Assista e cozinhe junto, no seu ritmo.", format: "VIDEO" },
   },
+  {
+    slug: "lista-substituicoes",
+    sku: "DM-SUB",
+    name: "Lista de Substituições Inteligentes",
+    category: "BONUS",
+    priceCents: 990,
+    shortDescription: "O que trocar no dia a dia (açúcar, farinha, pão) para reduzir o impacto na glicemia sem perder o sabor.",
+    material: { title: "Lista de Substituições Inteligentes", description: "Tabela de trocas de ingredientes de baixo índice glicêmico.", howToUse: "Consulte na hora de cozinhar e de fazer compras.", format: "PDF" },
+  },
+  {
+    slug: "cardapio-7-dias",
+    sku: "DM-CARD7",
+    name: "Cardápio Pronto de 7 Dias",
+    category: "JOURNAL",
+    priceCents: 1290,
+    shortDescription: "Uma semana inteira de refeições já montada (café, almoço, jantar e lanches) para você só seguir.",
+    material: { title: "Cardápio Pronto de 7 Dias", description: "Plano de 7 dias com todas as refeições definidas.", howToUse: "Siga o cardápio dia a dia e use a lista de compras.", format: "PDF" },
+  },
+  {
+    slug: "guia-lanches-petiscos",
+    sku: "DM-LANCHE",
+    name: "Guia de Lanches e Petiscos",
+    category: "BONUS",
+    priceCents: 1290,
+    shortDescription: "Opções rápidas para a fome entre as refeições e para receber visitas, sem disparar a glicemia.",
+    material: { title: "Guia de Lanches e Petiscos", description: "Lanches e petiscos práticos de baixo índice glicêmico.", howToUse: "Prepare quando bater a fome fora de hora.", format: "PDF" },
+  },
 ];
 
 /** Versão do catálogo. Ao mudar a estrutura (ofertas/bumps/preços), incremente para reaplicar no deploy. */
-const CATALOG_VERSION = "dm-4";
+const CATALOG_VERSION = "dm-5";
 
 /** Mudanças estruturais do catálogo aplicadas uma vez por versão (não sobrescreve imagens do admin). */
 async function applyCatalogUpdates() {
@@ -327,7 +354,7 @@ async function applyCatalogUpdates() {
   if (receitasUp) await db.upsell.update({ where: { id: receitasUp.id }, data: { active: true, sortOrder: 1, name: "+50 Receitas + Vídeos de Preparo", headline: "Quer dobrar as receitas e ainda ver como fazer cada uma?", title: "+50 Receitas + Vídeos de Preparo", description: "Mais 50 receitas de doces e salgados — coxinha, pão de queijo, bolos, tortas e sobremesas — e, de bônus, vídeos ensinando o passo a passo de cada receita. Tudo pensado para você comer sem aumentar a glicemia." } });
   await db.upsell.updateMany({ where: { product: { slug: { in: ["organizador-cardapio-30", "minicurso-organizacao-cozinha", "kit-familia"] } } }, data: { active: false } });
 
-  const setBump = async (slug: string, d: { name: string; title: string; benefit: string; priceCents: number; active: boolean; sortOrder: number; triggerProductIds: Prisma.InputJsonValue; showModal: boolean }) => {
+  const setBump = async (slug: string, d: { name: string; title: string; benefit: string; priceCents: number; active: boolean; sortOrder: number; triggerProductIds: Prisma.InputJsonValue; showModal: boolean; imageUrl?: string | null }) => {
     const pid = await idOf(slug);
     if (!pid) return;
     const existing = await db.orderBump.findFirst({ where: { productId: pid } });
@@ -342,6 +369,10 @@ async function applyCatalogUpdates() {
   await setBump("atualizacoes-vitalicias", { name: "Atualizações Vitalícias", title: "Atualizações Vitalícias de Receitas", benefit: "Novas receitas adicionadas ao e-book, para sempre.", priceCents: 1990, active: true, sortOrder: 4, triggerProductIds: j(completa ? [completa] : []), showModal: false });
   // Vídeo-aulas: aparece em QUALQUER oferta (sem gatilho) — complementa tanto o Básico quanto o Completo.
   await setBump("videoaulas-preparo", { name: "Vídeo-aulas de Preparo", title: "Vídeo-aulas de Preparo das Receitas", benefit: "Veja o passo a passo em vídeo e cozinhe junto.", priceCents: 1990, active: true, sortOrder: 5, triggerProductIds: j([]), showModal: false });
+  // Bumps adicionais que aparecem nas DUAS ofertas (sem gatilho). Com imagem (editável no admin).
+  await setBump("lista-substituicoes", { name: "Lista de Substituições", title: "Lista de Substituições Inteligentes", benefit: "O que trocar para reduzir o impacto na glicemia.", priceCents: 990, active: true, sortOrder: 6, triggerProductIds: j([]), showModal: false, imageUrl: "/img/guia-rotulos.png" });
+  await setBump("cardapio-7-dias", { name: "Cardápio 7 Dias", title: "Cardápio Pronto de 7 Dias", benefit: "Uma semana inteira de refeições já montada.", priceCents: 1290, active: true, sortOrder: 7, triggerProductIds: j([]), showModal: false, imageUrl: "/img/kit-planejamento.png" });
+  await setBump("guia-lanches-petiscos", { name: "Lanches e Petiscos", title: "Guia de Lanches e Petiscos", benefit: "Para a fome entre as refeições, sem culpa.", priceCents: 1290, active: true, sortOrder: 8, triggerProductIds: j([]), showModal: false, imageUrl: "/img/cafe-da-manha.png" });
   // Desativa bumps antigos que não se encaixam nas 2 ofertas
   for (const slug of ["cafe-da-manha-lanches", "guia-rotulos-ingredientes"]) {
     const pid = await idOf(slug);
