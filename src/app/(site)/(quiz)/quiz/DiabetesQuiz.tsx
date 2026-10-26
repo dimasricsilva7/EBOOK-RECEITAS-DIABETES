@@ -75,7 +75,7 @@ export function DiabetesQuiz({ questions }: { questions?: QuizQ[] }) {
     setScreen("result");
   };
 
-  const goToOffer = () => router.push(`/e-book?email=${encodeURIComponent(email.trim())}#oferta`);
+  const goToOffer = () => router.push(`/e-book?lp=1&email=${encodeURIComponent(email.trim())}#oferta`);
 
   const wrap = "mx-auto flex w-full max-w-xl flex-1 flex-col justify-center px-5 py-8 text-center";
 
