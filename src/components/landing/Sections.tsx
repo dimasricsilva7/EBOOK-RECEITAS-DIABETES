@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import ReactDOM from "react-dom";
 import Link from "next/link";
 import { Icon, formatIcon } from "@/components/ui/Icon";
 import { RichText } from "@/components/ui/RichText";
@@ -125,6 +126,8 @@ export function Hero({ section, ctx }: P) {
   const badges = cfgArr<string>(section.config, "badges").filter(Boolean).slice(0, 4);
   const eyebrow = cfgStr(section.config, "eyebrow");
   const img = section.imageUrl;
+  // Preload do LCP: o navegador começa a baixar a imagem do herói já na análise do HTML
+  if (img) ReactDOM.preload(img, { as: "image", fetchPriority: "high" });
   const [lead, ...rest] = (section.subtitle ?? "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   // Mobile-first: mockup no topo (menor), depois headline → subheadline → CTA, tudo centralizado.
   return (
