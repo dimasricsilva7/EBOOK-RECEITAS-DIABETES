@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CheckoutClient } from "./CheckoutClient";
+import { RecentPurchases } from "@/components/RecentPurchases";
 import { getSettingsFresh, isOn } from "@/server/settings";
 import { crediarioConfig } from "@/lib/crediario";
 import { bravopayMode } from "@/lib/env";
@@ -10,6 +11,8 @@ export const dynamic = "force-dynamic";
 export default async function CheckoutPage() {
   const s = await getSettingsFresh();
   return (
+    <>
+    {isOn(s.recent_purchases_enabled ?? "true") && <RecentPurchases />}
     <CheckoutClient
       title={s.checkout_title || "Finalizar compra"}
       requireCpf={isOn(s.require_cpf)}
@@ -32,5 +35,6 @@ export default async function CheckoutPage() {
       reservationMinutes={Number.parseInt(s.checkout_reservation_minutes || "0", 10) || 0}
       salesClosed={isOn(s.sales_enabled) ? null : s.sales_closed_message || "As vendas ainda não estão abertas."}
     />
+    </>
   );
 }

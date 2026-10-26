@@ -140,6 +140,8 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   reviews_verified_label: "Compra verificada",
   // Linha de prova no topo do hero (ex.: "Mais de 2.000 leitores"). Vazio = não exibe.
   reviews_hero_proof: "",
+  // Balões de compras REAIS recentes no checkout (só pedidos pagos; nunca inventa compras)
+  recent_purchases_enabled: "true",
   // Quiz e privacidade
   quiz_retention_days: "180",
   quiz_meta_events: "true",

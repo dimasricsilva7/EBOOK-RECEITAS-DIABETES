@@ -20,7 +20,7 @@ const USES: Record<string, { body?: string; image?: string; cta?: boolean; video
   cycle: { body: "Nota abaixo do ciclo (ex.: não é diagnóstico)" },
   facts: {},
   patterns: { body: "Nota de rodapé (ex.: \"é uma possibilidade de reflexão, não diagnóstico\")" },
-  method: { body: "Observação abaixo dos itens (ex.: limites do material)" },
+  method: { body: "Observação abaixo dos itens (ex.: limites do material)", image: "Imagem da seção (ex.: uma sobremesa saudável)" },
   content: { body: "Observação abaixo dos materiais" },
   experience: { image: "Imagem/mockup da área de acesso (identifique se for ilustrativa)" },
   video: { video: true },

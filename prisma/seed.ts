@@ -520,6 +520,7 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
         { icon: "book", title: "Almoço e jantar", text: "Pratos completos, saborosos e de baixo índice glicêmico." },
         { icon: "clock", title: "Lanches da tarde", text: "Opções práticas para não cair na tentação do industrializado." },
         { icon: "heart", title: "Doces e sobremesas liberados", text: "Mate a vontade de doce sem culpa e sem disparar a glicemia." },
+        { icon: "book", title: "Pães e massas do jeito certo", text: "Versões de baixo índice glicêmico para você não precisar cortar o pão." },
         { icon: "compass", title: "Guia de substituições", text: "O que trocar para reduzir açúcar e carboidrato sem perder o sabor." },
       ],
     }),
@@ -676,6 +677,7 @@ const GALLERY: { title: string; image: string }[] = [
 const FAQS: [string, string][] = [
   ["Essas receitas servem para diabetes tipo 1 e tipo 2?", "Sim. As receitas priorizam ingredientes de baixo índice glicêmico e ajudam no controle da glicemia tanto no tipo 1 quanto no tipo 2, além de serem úteis para pré-diabetes. Ainda assim, siga sempre as orientações do seu médico ou nutricionista."],
   ["Posso mesmo comer doce tendo diabetes?", "Sim, com as receitas certas. O e-book traz doces e sobremesas feitos para não disparar a glicemia, com trocas inteligentes de açúcar e farinha. A ideia é matar a vontade com segurança, dentro do seu controle."],
+  ["E pão, pode comer?", "Pode, do jeito certo. O segredo não é cortar o pão, é escolher a versão e a quantidade certas: o e-book traz pães e massas de baixo índice glicêmico (com farinhas integrais e alternativas) e mostra como encaixá-los na refeição sem o açúcar disparar. Siga sempre a orientação do seu médico ou nutricionista."],
   ["As receitas substituem meu remédio ou a insulina?", "Não. A alimentação é a maior aliada do controle da diabetes, mas NÃO substitui a sua medicação, a insulina nem o acompanhamento do seu médico. Use as receitas junto com o seu tratamento, nunca no lugar dele."],
   ["Preciso de ingredientes caros ou difíceis de achar?", "Não. As receitas usam ingredientes acessíveis, de mercado e feira, com passo a passo simples — pensadas para o dia a dia de quem tem pouco tempo."],
   ["Como vou receber o material?", "É digital. Assim que o pagamento no PIX é confirmado, o acesso é liberado na hora e você recebe um e-mail com o link. Se perder, é só pedir de novo em [Meu acesso](/acesso)."],
@@ -685,7 +687,7 @@ const FAQS: [string, string][] = [
 ];
 
 /** Versão do conteúdo da landing. Ao subir uma nova copy, incremente para reaplicar uma vez no deploy. */
-const LANDING_VERSION = "dm-7";
+const LANDING_VERSION = "dm-8";
 
 /** Reaplica a copy comercial do catálogo (nomes/descrições/badges) a partir dos arrays acima. */
 async function refreshCatalogCopy() {

@@ -25,7 +25,7 @@ const VALIDATORS: Record<string, (v: string) => string | null> = {
   checkout_reservation_minutes: (v) => (/^\d+$/.test(v) && Number(v) >= 0 && Number(v) <= 120 ? null : "Barra de reserva entre 0 e 120 minutos (0 = desligada)"),
 };
 const URL_KEYS = ["logo_url", "email_logo_url", "author_photo_url", "favicon_url", "og_image_url", "instagram_url", "tiktok_url", "facebook_url", "youtube_url"];
-const BOOL_KEYS = ["email_confirmation_enabled", "email_recovery_enabled", "email_checkout_enabled", "email_order_enabled", "email_quiz_result_enabled", "sales_enabled", "guarantee_enabled", "quiz_meta_events", "sticky_cta_enabled", "landing_animations", "require_cpf", "meta_pixel_enabled", "meta_capi_enabled", "ga_enabled", "cookie_banner_enabled", "pix_enabled", "crediario_enabled", "crediario_validity_reject_expired", "reviews_enabled"];
+const BOOL_KEYS = ["email_confirmation_enabled", "email_recovery_enabled", "email_checkout_enabled", "email_order_enabled", "email_quiz_result_enabled", "sales_enabled", "guarantee_enabled", "quiz_meta_events", "sticky_cta_enabled", "landing_animations", "require_cpf", "meta_pixel_enabled", "meta_capi_enabled", "ga_enabled", "cookie_banner_enabled", "pix_enabled", "crediario_enabled", "crediario_validity_reject_expired", "reviews_enabled", "recent_purchases_enabled"];
 
 /** Salva somente as chaves presentes no formulário (cada aba envia as suas). */
 export async function saveSettings(_: ActionResult, fd: FormData): Promise<ActionResult> {

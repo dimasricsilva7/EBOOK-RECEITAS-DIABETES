@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { metaEvent } from "@/lib/client/tracking";
+import { metaEvent, track } from "@/lib/client/tracking";
 
 /** Quiz de captação (client-side). Fluxo: intro → 5 perguntas → loader → e-mail → resultado + oferta. */
 
@@ -52,38 +52,51 @@ export function DiabetesQuiz() {
     return () => clearTimeout(t);
   }, [screen]);
 
+  const start = () => {
+    track("quiz_started", { element: "quiz_start" });
+    setScreen(0);
+  };
+
   const answer = (qi: number, oi: number) => {
     const next = [...answers];
     next[qi] = oi;
     setAnswers(next);
-    setTimeout(() => setScreen(qi + 1 < QUESTIONS.length ? qi + 1 : "loading"), 180);
+    const last = qi + 1 >= QUESTIONS.length;
+    if (last) track("quiz_completed");
+    setTimeout(() => setScreen(last ? "loading" : qi + 1), 180);
   };
 
-  const submitEmail = () => {
+  const submitEmail = async () => {
     if (!emailOk(email)) {
       setEmailErr("Digite um e-mail válido.");
       return;
     }
     setEmailErr(null);
     setSending(true);
+    const mail = email.trim();
     const respostas = QUESTIONS.map((q, i) => ({ pergunta: q.q, resposta: answers[i] != null ? q.options[answers[i]!] : null }));
-    // Nosso servidor: captura o lead (admin) + adiciona à Audience da Resend + manda o brinde.
-    fetch("/api/quiz-lead", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email.trim(), respostas }) }).catch(() => {});
-    // Opcional: webhook externo adicional (se o dono plugar outra ferramenta).
-    const url = process.env.NEXT_PUBLIC_LEAD_WEBHOOK;
-    if (url) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email.trim(), origem: "quiz-diabetes", respostas }) }).catch(() => {});
     // Guarda o e-mail para pré-preencher o checkout.
     try {
-      localStorage.setItem("dm_quiz_email", email.trim());
+      localStorage.setItem("dm_quiz_email", mail);
     } catch {
       /* ignore */
     }
+    // AGUARDA o salvamento do lead no painel (garante que nunca se perde).
+    try {
+      await fetch("/api/quiz-lead", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: mail, respostas }) });
+    } catch {
+      /* rede instável: segue mesmo assim */
+    }
+    const url = process.env.NEXT_PUBLIC_LEAD_WEBHOOK;
+    if (url) fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: mail, origem: "quiz-diabetes", respostas }) }).catch(() => {});
+    track("quiz_lead_captured");
     try {
       metaEvent("Lead", { content_name: "quiz_diabetes" });
     } catch {
       /* pixel opcional */
     }
-    setTimeout(() => setScreen("result"), 350);
+    setSending(false);
+    setScreen("result");
   };
 
   const goToOffer = () => router.push(`/e-book?email=${encodeURIComponent(email.trim())}#oferta`);
@@ -99,7 +112,7 @@ export function DiabetesQuiz() {
           Responda {QUESTIONS.length} perguntas rápidas e veja como comer o que você gosta <em className="text-primary not-italic underline decoration-accent decoration-2 underline-offset-4">sem o aparelhinho apitar alto</em>.
         </h1>
         <p className="mt-5 text-lg leading-relaxed text-ink/75">Leva menos de 1 minuto. No fim, você recebe um guia gratuito com 3 sobremesas que não disparam a glicemia.</p>
-        <button onClick={() => setScreen(0)} className="btn-primary mx-auto mt-8 w-full max-w-sm text-base">Começar</button>
+        <button onClick={start} className="btn-primary mx-auto mt-8 w-full max-w-sm text-base">Começar</button>
       </div>
     );
   }
